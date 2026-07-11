@@ -35,7 +35,7 @@ export default function Home() {
           <Link className="button button-secondary sign-in-link" href="/auth">
             Sign in
           </Link>
-          <Link className="button button-primary" href="/auth">
+          <Link className="button button-primary" href="/auth?intent=seller">
             Open your store
           </Link>
         </div>
@@ -62,7 +62,7 @@ export default function Home() {
             TSKC gives creators and sellers one place to open a store, sell products, and deliver them to customers.
           </p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/auth">
+            <Link className="button button-primary" href="/auth?intent=seller">
               Create your store
             </Link>
             <a className="text-link" href="#seller">
@@ -168,7 +168,7 @@ export default function Home() {
             <li>Order status and delivery</li>
             <li>Receipt checks before confirmation</li>
           </ul>
-          <Link className="button button-primary" href="/auth">
+          <Link className="button button-primary" href="/auth?intent=seller">
             Open your store
           </Link>
         </article>
@@ -203,7 +203,7 @@ export default function Home() {
       <section className="closing-cta" aria-labelledby="closing-title">
         <p className="eyebrow">Ready when you are</p>
         <h2 id="closing-title">Start selling what you make.</h2>
-        <Link className="button button-primary" href="/auth">
+        <Link className="button button-primary" href="/auth?intent=seller">
           Create your store
         </Link>
       </section>

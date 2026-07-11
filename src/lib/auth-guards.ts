@@ -3,6 +3,10 @@ import "server-only";
 export const appRoles = ["buyer", "seller"] as const;
 export type AppRole = (typeof appRoles)[number];
 
+export function isAppRole(value: string): value is AppRole {
+  return (appRoles as readonly string[]).includes(value);
+}
+
 export type AuthIdentity = {
   userId: string;
   roles: readonly AppRole[];

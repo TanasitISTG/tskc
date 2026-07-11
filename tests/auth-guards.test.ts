@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   AuthError,
+  isAppRole,
   requireRole,
   requireSession,
   safeReturnTo,
@@ -35,5 +36,13 @@ describe("auth guards", () => {
 
   it("allows the matching role", () => {
     expect(requireRole(buyer, "buyer")).toEqual(buyer);
+  });
+});
+
+describe("isAppRole", () => {
+  it("accepts only self-selectable account roles", () => {
+    expect(isAppRole("buyer")).toBe(true);
+    expect(isAppRole("seller")).toBe(true);
+    expect(isAppRole("platform-owner")).toBe(false);
   });
 });
