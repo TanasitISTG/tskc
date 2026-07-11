@@ -12,7 +12,7 @@ type Provider = "google" | "facebook" | "discord";
 function ProviderIcon({ provider }: { provider: Provider }) {
   if (provider === "google") {
     return (
-      <svg className="social-provider-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="social-provider-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
         <path fill="#4285F4" d="M21.35 12.27c0-.75-.07-1.47-.2-2.16H12v4.09h5.22a4.46 4.46 0 0 1-1.93 2.93v2.65h3.41c2-1.84 3.16-4.56 3.16-7.51Z" />
         <path fill="#34A853" d="M12 21.72c2.7 0 4.97-.9 6.63-2.44l-3.41-2.65c-.94.63-2.15 1-3.22 1-2.48 0-4.58-1.68-5.33-3.93H3.15v2.73A10 10 0 0 0 12 21.72Z" />
         <path fill="#FBBC05" d="M6.67 13.7a6.02 6.02 0 0 1 0-3.4V7.57H3.15a10 10 0 0 0 0 8.86l3.52-2.73Z" />
@@ -23,14 +23,14 @@ function ProviderIcon({ provider }: { provider: Provider }) {
 
   if (provider === "facebook") {
     return (
-      <svg className="social-provider-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="social-provider-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
         <path fill="currentColor" d="M13.5 21v-8h2.75l.41-3.12H13.5V7.9c0-.9.26-1.52 1.55-1.52h1.65V3.59c-.29-.04-1.27-.12-2.42-.12-2.39 0-4.03 1.46-4.03 4.14v2.27H4.5V13h2.75v8h6.25Z" />
       </svg>
     );
   }
 
   return (
-    <svg className="social-provider-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="social-provider-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
       <path fill="currentColor" d="M20.3 4.37A19.8 19.8 0 0 0 15.4 3l-.6 1.22a18.2 18.2 0 0 0-5.6 0L8.6 3c-1.7.3-3.35.76-4.9 1.37C.6 9.04-.25 13.6.17 18.1a19.6 19.6 0 0 0 6 3.03l1.45-1.98a12.6 12.6 0 0 1-2.28-1.08l.55-.43c4.4 2.06 9.43 2.06 13.78 0l.55.43c-.73.43-1.49.79-2.28 1.08l1.45 1.98a19.6 19.6 0 0 0 6-3.03c.5-5.22-.85-9.74-4.99-13.73ZM8.03 15.37c-1.35 0-2.46-1.23-2.46-2.74s1.09-2.74 2.46-2.74 2.48 1.24 2.46 2.74c0 1.51-1.1 2.74-2.46 2.74Zm7.94 0c-1.35 0-2.46-1.23-2.46-2.74s1.09-2.74 2.46-2.74 2.48 1.24 2.46 2.74c0 1.51-1.1 2.74-2.46 2.74Z" />
     </svg>
   );
