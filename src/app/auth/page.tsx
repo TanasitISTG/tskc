@@ -8,6 +8,8 @@ import { authClient } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up" | "forgot" | "reset";
 type Provider = "google" | "facebook" | "discord";
+type PendingAction = Mode | Provider | "sign-out";
+type Message = { text: string; tone: "error" | "success" };
 
 function ProviderIcon({ provider }: { provider: Provider }) {
   if (provider === "google") {
@@ -64,13 +66,14 @@ function AuthPanel() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<Message | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const busy = pendingAction !== null;
 
   async function submitCredentials(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
-    setMessage("");
+    setPendingAction(mode);
+    setMessage(null);
 
     try {
       const result =
@@ -85,22 +88,22 @@ function AuthPanel() {
           : await authClient.signIn.username({ username, password });
 
       if (result.error) {
-        setMessage(result.error.message ?? "Something went wrong. Try again.");
+        setMessage({ text: result.error.message ?? "Something went wrong. Try again.", tone: "error" });
         return;
       }
 
       router.replace(next);
       router.refresh();
     } catch (error) {
-      setMessage(errorMessage(error));
+      setMessage({ text: errorMessage(error), tone: "error" });
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
   async function signInWith(provider: Provider) {
-    setBusy(true);
-    setMessage("");
+    setPendingAction(provider);
+    setMessage(null);
 
     try {
       const result = await authClient.signIn.social({
@@ -109,19 +112,19 @@ function AuthPanel() {
       });
 
       if (result.error) {
-        setMessage(result.error.message ?? "Something went wrong. Try again.");
+        setMessage({ text: result.error.message ?? "Something went wrong. Try again.", tone: "error" });
       }
     } catch (error) {
-      setMessage(errorMessage(error));
+      setMessage({ text: errorMessage(error), tone: "error" });
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
   async function requestReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
-    setMessage("");
+    setPendingAction("forgot");
+    setMessage(null);
 
     try {
       await authClient.requestPasswordReset({
@@ -129,8 +132,8 @@ function AuthPanel() {
         redirectTo: `${window.location.origin}/auth?mode=reset`,
       });
     } finally {
-      setMessage("If that account can reset a password, we sent a link.");
-      setBusy(false);
+      setMessage({ text: "If that account can reset a password, we sent a link.", tone: "success" });
+      setPendingAction(null);
     }
   }
 
@@ -138,35 +141,48 @@ function AuthPanel() {
     event.preventDefault();
 
     if (token === null) {
-      setMessage("This reset link is missing its token.");
+      setMessage({ text: "This reset link is missing its token.", tone: "error" });
       return;
     }
 
-    setBusy(true);
-    setMessage("");
+    setPendingAction("reset");
+    setMessage(null);
 
     try {
       const result = await authClient.resetPassword({ newPassword: password, token });
 
       if (result.error) {
-        setMessage(result.error.message ?? "Something went wrong. Try again.");
+        setMessage({ text: result.error.message ?? "Something went wrong. Try again.", tone: "error" });
         return;
       }
 
-      setMessage("Your password has been reset. You can now sign in.");
+      setMessage({ text: "Your password has been reset. You can now sign in.", tone: "success" });
       setMode("sign-in");
     } catch (error) {
-      setMessage(errorMessage(error));
+      setMessage({ text: errorMessage(error), tone: "error" });
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
   async function signOut() {
-    setBusy(true);
-    await authClient.signOut();
-    router.replace("/");
-    router.refresh();
+    setPendingAction("sign-out");
+
+    try {
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        setMessage({ text: result.error.message ?? "Something went wrong. Try again.", tone: "error" });
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch (error) {
+      setMessage({ text: errorMessage(error), tone: "error" });
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   if (sessionPending) {
@@ -188,9 +204,10 @@ function AuthPanel() {
               Continue
             </Link>
             <button className="button button-secondary" type="button" disabled={busy} onClick={signOut}>
-              Sign out
+              {pendingAction === "sign-out" ? "Signing out…" : "Sign out"}
             </button>
           </div>
+          {message && <p className={`auth-message auth-message-${message.tone}`} role={message.tone === "error" ? "alert" : "status"}>{message.text}</p>}
         </section>
       </main>
     );
@@ -212,10 +229,11 @@ function AuthPanel() {
         <Link className="auth-home-link" href="/">← Back to TSKC</Link>
         <p className="eyebrow">TSKC for independent businesses</p>
         <h1 id="auth-title">{title}</h1>
+        {message && <p className={`auth-message auth-message-${message.tone}`} role={message.tone === "error" ? "alert" : "status"}>{message.text}</p>}
         {isCredentialsMode && (
           <div className="auth-tabs" role="tablist" aria-label="Account mode">
-            <button className={mode === "sign-in" ? "is-selected" : ""} type="button" role="tab" aria-selected={mode === "sign-in"} onClick={() => setMode("sign-in")}>Sign in</button>
-            <button className={mode === "sign-up" ? "is-selected" : ""} type="button" role="tab" aria-selected={mode === "sign-up"} onClick={() => setMode("sign-up")}>Create account</button>
+            <button className={mode === "sign-in" ? "is-selected" : ""} type="button" role="tab" aria-selected={mode === "sign-in"} disabled={busy} onClick={() => setMode("sign-in")}>Sign in</button>
+            <button className={mode === "sign-up" ? "is-selected" : ""} type="button" role="tab" aria-selected={mode === "sign-up"} disabled={busy} onClick={() => setMode("sign-up")}>Create account</button>
           </div>
         )}
 
@@ -223,8 +241,8 @@ function AuthPanel() {
           <form className="auth-form" onSubmit={requestReset}>
             <label htmlFor="email">Email</label>
             <input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
-            <button className="button button-primary" disabled={busy}>Send reset link</button>
-            <button className="auth-link" type="button" onClick={() => setMode("sign-in")}>Back to sign in</button>
+            <button className="button button-primary" disabled={busy}>{pendingAction === "forgot" ? "Sending reset link…" : "Send reset link"}</button>
+            <button className="auth-link" type="button" disabled={busy} onClick={() => setMode("sign-in")}>Back to sign in</button>
           </form>
         )}
 
@@ -232,7 +250,7 @@ function AuthPanel() {
           <form className="auth-form" onSubmit={resetPassword}>
             <label htmlFor="password">New password</label>
             <input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete="new-password" />
-            <button className="button button-primary" disabled={busy}>Reset password</button>
+            <button className="button button-primary" disabled={busy}>{pendingAction === "reset" ? "Resetting password…" : "Reset password"}</button>
           </form>
         )}
 
@@ -245,17 +263,15 @@ function AuthPanel() {
               {mode === "sign-up" && <><label htmlFor="email">Email for password reset</label><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></>}
               <label htmlFor="password">Password</label>
               <input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete={mode === "sign-up" ? "new-password" : "current-password"} />
-              <button className="button button-primary" disabled={busy}>{mode === "sign-up" ? "Create account" : "Sign in"}</button>
-              {mode === "sign-in" && <button className="auth-link" type="button" onClick={() => setMode("forgot")}>Forgot your password?</button>}
+              <button className="button button-primary" disabled={busy}>{pendingAction === mode ? mode === "sign-up" ? "Creating account…" : "Signing in…" : mode === "sign-up" ? "Create account" : "Sign in"}</button>
+              {mode === "sign-in" && <button className="auth-link" type="button" disabled={busy} onClick={() => setMode("forgot")}>Forgot your password?</button>}
             </form>
             <div className="auth-divider">or continue with</div>
             <div className="auth-socials">
-              {(["google", "facebook", "discord"] as const).map((provider) => <button className="button button-secondary social-provider-button" type="button" key={provider} disabled={busy} onClick={() => signInWith(provider)}><ProviderIcon provider={provider} />Continue with {provider[0].toUpperCase() + provider.slice(1)}</button>)}
+              {(["google", "facebook", "discord"] as const).map((provider) => <button className="button button-secondary social-provider-button" type="button" key={provider} disabled={busy} onClick={() => signInWith(provider)}>{pendingAction === provider ? `Connecting to ${provider[0].toUpperCase() + provider.slice(1)}…` : <><ProviderIcon provider={provider} />Continue with {provider[0].toUpperCase() + provider.slice(1)}</>}</button>)}
             </div>
           </>
         )}
-
-        {message && <p className="auth-message" role="status">{message}</p>}
       </section>
     </main>
   );
