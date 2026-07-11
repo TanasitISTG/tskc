@@ -215,8 +215,8 @@ h3 { margin-bottom: 10px; font-size: clamp(28px, 3vw, 38px); font-weight: 600; l
 .auth-divider::before, .auth-divider::after { height: 1px; background: var(--hairline); content: ""; }
 .auth-socials { display: grid; gap: 8px; }
 .auth-socials .button { width: 100%; }
-.social-provider-button { position: relative; }
-.auth-socials .social-provider-icon { position: absolute !important; left: 14px !important; width: 18px !important; height: 18px !important; min-width: 18px !important; min-height: 18px !important; max-width: 18px !important; max-height: 18px !important; }
+.social-provider-button { gap: 10px; }
+.auth-socials .social-provider-icon { position: static !important; flex: 0 0 18px; width: 18px !important; height: 18px !important; min-width: 18px !important; min-height: 18px !important; max-width: 18px !important; max-height: 18px !important; }
 .auth-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .auth-message { margin: 20px 0 0; }
 
