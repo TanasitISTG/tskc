@@ -14,7 +14,7 @@ Present the single THB 149 monthly branded-website plan. Explain the direct webs
 
 ## Task 3: Seller accounts and sessions
 
-Implement Better Auth username/password registration plus Google, Facebook, and Discord OAuth; secure sessions; sign-out; and Resend password reset.
+Implement Better Auth username/password registration plus Google and Discord OAuth; secure sessions; sign-out; and Resend password reset.
 
 **Acceptance criteria**
 

@@ -27,7 +27,7 @@ TSKC is not a marketplace, a multi-vendor commerce platform, or a buyer-wallet p
 | Layer | Choice | Responsibility |
 | --- | --- | --- |
 | Web application | Next.js App Router | Public marketing, seller account, website setup, and public branded sites. |
-| Authentication | Better Auth | Username/password, Google, Facebook, Discord, secure sessions, and password reset. |
+| Authentication | Better Auth | Username/password, Google, Discord, secure sessions, and password reset. |
 | Database | Neon PostgreSQL + Drizzle ORM | Authentication persistence, subscriptions, website configuration, and future tenant data. |
 | API | tRPC | Typed server procedures. Protected procedures resolve the session on every request. |
 | Email | Resend | Password-reset links only. |

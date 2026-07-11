@@ -13,8 +13,6 @@ const rawEnvSchema = z
     BETTER_AUTH_URL: nonEmptyString.url().optional(),
     GOOGLE_CLIENT_ID: nonEmptyString.optional(),
     GOOGLE_CLIENT_SECRET: nonEmptyString.optional(),
-    FACEBOOK_CLIENT_ID: nonEmptyString.optional(),
-    FACEBOOK_CLIENT_SECRET: nonEmptyString.optional(),
     DISCORD_CLIENT_ID: nonEmptyString.optional(),
     DISCORD_CLIENT_SECRET: nonEmptyString.optional(),
     R2_ENDPOINT: nonEmptyString.optional(),
@@ -69,10 +67,6 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
   });
-  const facebook = allOrNone("Facebook OAuth", {
-    FACEBOOK_CLIENT_ID: env.FACEBOOK_CLIENT_ID,
-    FACEBOOK_CLIENT_SECRET: env.FACEBOOK_CLIENT_SECRET,
-  });
   const discord = allOrNone("Discord OAuth", {
     DISCORD_CLIENT_ID: env.DISCORD_CLIENT_ID,
     DISCORD_CLIENT_SECRET: env.DISCORD_CLIENT_SECRET,
@@ -91,7 +85,7 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
       throw new Error("DATABASE_URL is required in production");
     }
 
-    if (betterAuth === undefined || resend === undefined || google === undefined || facebook === undefined || discord === undefined) {
+    if (betterAuth === undefined || resend === undefined || google === undefined || discord === undefined) {
       throw new Error("Auth configuration is required in production");
     }
   }
@@ -106,10 +100,6 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     google: google && {
       clientId: google.GOOGLE_CLIENT_ID,
       clientSecret: google.GOOGLE_CLIENT_SECRET,
-    },
-    facebook: facebook && {
-      clientId: facebook.FACEBOOK_CLIENT_ID,
-      clientSecret: facebook.FACEBOOK_CLIENT_SECRET,
     },
     discord: discord && {
       clientId: discord.DISCORD_CLIENT_ID,

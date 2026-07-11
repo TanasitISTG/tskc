@@ -13,7 +13,7 @@ TSKC gives an independent business a direct, branded web presence through one mo
 ## Scope for v1
 
 - A public landing page that explains the single branded-website plan.
-- Seller account creation and sign-in through username/password, Google, Facebook, or Discord.
+- Seller account creation and sign-in through username/password, Google, or Discord.
 - Password resets through Resend; email verification is not required in v1.
 - One seller account and one branded website.
 - Plan selection, subscription state, website identity, essential public content, and publication controls.

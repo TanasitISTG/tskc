@@ -61,8 +61,6 @@ describe("parseServerEnv", () => {
         BETTER_AUTH_URL: "https://tskc.example",
         GOOGLE_CLIENT_ID: "google-client-id",
         GOOGLE_CLIENT_SECRET: "google-client-secret",
-        FACEBOOK_CLIENT_ID: "facebook-client-id",
-        FACEBOOK_CLIENT_SECRET: "facebook-client-secret",
         DISCORD_CLIENT_ID: "discord-client-id",
         DISCORD_CLIENT_SECRET: "discord-client-secret",
         R2_ENDPOINT: "https://account.r2.cloudflarestorage.com",

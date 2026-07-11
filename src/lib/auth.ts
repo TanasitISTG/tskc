@@ -53,16 +53,6 @@ function createAuth() {
           }),
         },
       }),
-      ...(env.facebook && {
-        facebook: {
-          clientId: env.facebook.clientId,
-          clientSecret: env.facebook.clientSecret,
-          scope: ["email", "public_profile"],
-          mapProfileToUser: (profile) => ({
-            email: profile.email ?? syntheticEmail("facebook", profile.id),
-          }),
-        },
-      }),
       ...(env.discord && {
         discord: {
           clientId: env.discord.clientId,

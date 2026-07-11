@@ -7,7 +7,7 @@ import { type FormEvent, Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up" | "forgot" | "reset";
-type Provider = "google" | "facebook" | "discord";
+type Provider = "google" | "discord";
 type PendingAction = Mode | Provider | "sign-out";
 type Message = { text: string; tone: "error" | "success" };
 
@@ -19,14 +19,6 @@ function ProviderIcon({ provider }: { provider: Provider }) {
         <path fill="#34A853" d="M12 21.72c2.7 0 4.97-.9 6.63-2.44l-3.41-2.65c-.94.63-2.15 1-3.22 1-2.48 0-4.58-1.68-5.33-3.93H3.15v2.73A10 10 0 0 0 12 21.72Z" />
         <path fill="#FBBC05" d="M6.67 13.7a6.02 6.02 0 0 1 0-3.4V7.57H3.15a10 10 0 0 0 0 8.86l3.52-2.73Z" />
         <path fill="#EA4335" d="M12 6.37c1.46 0 2.76.5 3.79 1.48l2.84-2.84C16.96 3.46 14.7 2.28 12 2.28a10 10 0 0 0-8.85 5.29l3.52 2.73C7.42 8.05 9.52 6.37 12 6.37Z" />
-      </svg>
-    );
-  }
-
-  if (provider === "facebook") {
-    return (
-      <svg className="social-provider-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path fill="currentColor" d="M13.5 21v-8h2.75l.41-3.12H13.5V7.9c0-.9.26-1.52 1.55-1.52h1.65V3.59c-.29-.04-1.27-.12-2.42-.12-2.39 0-4.03 1.46-4.03 4.14v2.27H4.5V13h2.75v8h6.25Z" />
       </svg>
     );
   }
@@ -268,7 +260,7 @@ function AuthPanel() {
             </form>
             <div className="auth-divider">or continue with</div>
             <div className="auth-socials">
-              {(["google", "facebook", "discord"] as const).map((provider) => <button className="button button-secondary social-provider-button" type="button" key={provider} disabled={busy} onClick={() => signInWith(provider)}>{pendingAction === provider ? `Connecting to ${provider[0].toUpperCase() + provider.slice(1)}…` : <><ProviderIcon provider={provider} />Continue with {provider[0].toUpperCase() + provider.slice(1)}</>}</button>)}
+              {(["google", "discord"] as const).map((provider) => <button className="button button-secondary social-provider-button" type="button" key={provider} disabled={busy} onClick={() => signInWith(provider)}>{pendingAction === provider ? `Connecting to ${provider[0].toUpperCase() + provider.slice(1)}…` : <><ProviderIcon provider={provider} />Continue with {provider[0].toUpperCase() + provider.slice(1)}</>}</button>)}
             </div>
           </>
         )}
