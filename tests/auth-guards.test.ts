@@ -8,8 +8,8 @@ import {
 
 describe("safeReturnTo", () => {
   it("accepts an internal return path", () => {
-    expect(safeReturnTo("/seller/orders?filter=open")).toBe(
-      "/seller/orders?filter=open",
+    expect(safeReturnTo("/setup/website?step=identity")).toBe(
+      "/setup/website?step=identity",
     );
   });
 

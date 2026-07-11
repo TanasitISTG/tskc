@@ -24,7 +24,7 @@ describe("sendPasswordResetEmail", () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(null, { status: 202 }));
 
     await sendPasswordResetEmail(
-      { to: "buyer@example.com", url: "https://tskc.example/reset" },
+      { to: "seller@example.com", url: "https://tskc.example/reset" },
       config,
       fetcher,
     );
