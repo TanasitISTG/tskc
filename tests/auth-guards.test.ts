@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   AuthError,
-  isAppRole,
-  requireRole,
   requireSession,
   safeReturnTo,
 } from "@/lib/auth-guards";
@@ -23,26 +21,14 @@ describe("safeReturnTo", () => {
 });
 
 describe("auth guards", () => {
-  const buyer = { userId: "buyer-1", roles: ["buyer"] as const };
+  const seller = { userId: "seller-1" };
 
   it("rejects protected actions without a session", () => {
     expect(() => requireSession(null)).toThrow(AuthError);
     expect(() => requireSession(null)).toThrow("UNAUTHORIZED");
   });
 
-  it("rejects a buyer from seller-only actions", () => {
-    expect(() => requireRole(buyer, "seller")).toThrow("FORBIDDEN");
-  });
-
-  it("allows the matching role", () => {
-    expect(requireRole(buyer, "buyer")).toEqual(buyer);
-  });
-});
-
-describe("isAppRole", () => {
-  it("accepts only self-selectable account roles", () => {
-    expect(isAppRole("buyer")).toBe(true);
-    expect(isAppRole("seller")).toBe(true);
-    expect(isAppRole("platform-owner")).toBe(false);
+  it("returns the authenticated seller identity", () => {
+    expect(requireSession(seller)).toEqual(seller);
   });
 });

@@ -2,12 +2,7 @@ import "server-only";
 
 import { initTRPC, TRPCError } from "@trpc/server";
 
-import {
-  AuthError,
-  requireRole,
-  requireSession,
-  type AppRole,
-} from "@/lib/auth-guards";
+import { AuthError, requireSession } from "@/lib/auth-guards";
 import type { AuthContext } from "@/server/auth-context";
 
 const t = initTRPC.context<AuthContext>().create();
@@ -31,24 +26,10 @@ export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   }
 });
 
-function roleProcedure(role: AppRole) {
-  return protectedProcedure.use(({ ctx, next }) => {
-    try {
-      return next({ ctx: { identity: requireRole(ctx.identity, role) } });
-    } catch (error) {
-      return toTrpcError(error);
-    }
-  });
-}
-
-export const buyerProcedure = roleProcedure("buyer");
-export const sellerProcedure = roleProcedure("seller");
-
 export const appRouter = router({
   health: publicProcedure.query(() => ({ status: "ok" as const })),
   auth: router({
-    me: protectedProcedure.query(({ ctx }) => ctx.identity),
-    sellerIdentity: sellerProcedure.query(({ ctx }) => ({
+    me: protectedProcedure.query(({ ctx }) => ({
       userId: ctx.identity.userId,
     })),
   }),

@@ -15,22 +15,12 @@ describe("appRouter", () => {
     await expect(caller.auth.me()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  it("rejects buyers from seller procedures", async () => {
+  it("allows an authenticated seller through protected procedures", async () => {
     const caller = appRouter.createCaller({
-      identity: { userId: "buyer-1", roles: ["buyer"] },
+      identity: { userId: "seller-1" },
     });
 
-    await expect(caller.auth.sellerIdentity()).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
-  });
-
-  it("allows sellers through seller procedures", async () => {
-    const caller = appRouter.createCaller({
-      identity: { userId: "seller-1", roles: ["seller"] },
-    });
-
-    await expect(caller.auth.sellerIdentity()).resolves.toEqual({
+    await expect(caller.auth.me()).resolves.toEqual({
       userId: "seller-1",
     });
   });

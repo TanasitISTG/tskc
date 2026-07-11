@@ -2,14 +2,11 @@ import {
   bigint,
   boolean,
   integer,
-  pgEnum,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-
-export const appRole = pgEnum("app_role", ["buyer", "seller"]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -86,17 +83,3 @@ export const rateLimit = pgTable("rate_limit", {
   count: integer("count").notNull(),
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
-
-export const userRole = pgTable(
-  "user_role",
-  {
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    role: appRole("role").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [uniqueIndex("user_role_unique").on(table.userId, table.role)],
-);

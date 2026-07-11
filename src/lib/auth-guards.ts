@@ -1,21 +1,11 @@
 import "server-only";
 
-export const appRoles = ["buyer", "seller"] as const;
-export type AppRole = (typeof appRoles)[number];
-
-export function isAppRole(value: string): value is AppRole {
-  return (appRoles as readonly string[]).includes(value);
-}
-
 export type AuthIdentity = {
   userId: string;
-  roles: readonly AppRole[];
 };
 
 export class AuthError extends Error {
-  constructor(
-    public readonly code: "UNAUTHORIZED" | "FORBIDDEN",
-  ) {
+  constructor(public readonly code: "UNAUTHORIZED") {
     super(code);
   }
 }
@@ -32,17 +22,4 @@ export function requireSession(
   }
 
   return identity;
-}
-
-export function requireRole(
-  identity: AuthIdentity | null,
-  role: AppRole,
-): AuthIdentity {
-  const session = requireSession(identity);
-
-  if (!session.roles.includes(role)) {
-    throw new AuthError("FORBIDDEN");
-  }
-
-  return session;
 }

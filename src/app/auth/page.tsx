@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useState } from "react";
+import { type FormEvent, Suspense, useState } from "react";
 
-import { selectRole } from "@/app/auth/actions";
 import { authClient } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up" | "forgot" | "reset";
@@ -30,31 +29,16 @@ function AuthPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const requestedMode = searchParams.get("mode");
-  const intent = searchParams.get("intent") === "buyer" ? "buyer" : "seller";
   const next = internalPath(searchParams.get("next"));
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const [mode, setMode] = useState<Mode>(
-    token ? "reset" : requestedMode === "forgot" ? "forgot" : "sign-in",
+    token ? "reset" : searchParams.get("mode") === "forgot" ? "forgot" : "sign-in",
   );
-  const [role, setRole] = useState(intent);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-
-  async function finishAuthentication() {
-    const result = await selectRole(role);
-
-    if (result.error) {
-      setMessage(result.error);
-      return;
-    }
-
-    router.replace(next);
-    router.refresh();
-  }
 
   async function submitCredentials(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +53,7 @@ function AuthPanel() {
               username,
               email,
               password,
-              callbackURL: `${window.location.origin}/auth?mode=complete&intent=${role}&next=${encodeURIComponent(next)}`,
+              callbackURL: `${window.location.origin}/auth?next=${encodeURIComponent(next)}`,
             })
           : await authClient.signIn.username({ username, password });
 
@@ -78,7 +62,8 @@ function AuthPanel() {
         return;
       }
 
-      await finishAuthentication();
+      router.replace(next);
+      router.refresh();
     } catch (error) {
       setMessage(errorMessage(error));
     } finally {
@@ -93,7 +78,7 @@ function AuthPanel() {
     try {
       const result = await authClient.signIn.social({
         provider,
-        callbackURL: `${window.location.origin}/auth?mode=complete&intent=${role}&next=${encodeURIComponent(next)}`,
+        callbackURL: `${window.location.origin}/auth?next=${encodeURIComponent(next)}`,
       });
 
       if (result.error) {
@@ -112,19 +97,12 @@ function AuthPanel() {
     setMessage("");
 
     try {
-      const result = await authClient.requestPasswordReset({
+      await authClient.requestPasswordReset({
         email,
         redirectTo: `${window.location.origin}/auth?mode=reset`,
       });
-
-      setMessage(
-        result.error
-          ? "If that account can reset a password, we sent a link."
-          : "If that account can reset a password, we sent a link.",
-      );
-    } catch {
-      setMessage("If that account can reset a password, we sent a link.");
     } finally {
+      setMessage("If that account can reset a password, we sent a link.");
       setBusy(false);
     }
   }
@@ -173,10 +151,14 @@ function AuthPanel() {
       <main className="auth-page">
         <section className="auth-card" aria-labelledby="auth-title">
           <p className="eyebrow">TSKC account</p>
-          <h1 id="auth-title">You&apos;re signed in.</h1>
-          <p className="auth-copy">{requestedMode === "complete" ? "Choose where to continue and we&apos;ll set up your account access." : "Your account is ready whenever you are."}</p>
+          <h1 id="auth-title">Your account is ready.</h1>
+          <p className="auth-copy">
+            You&apos;re signed in. The next step is choosing your website plan and making the site yours.
+          </p>
           <div className="auth-actions">
-            {requestedMode === "complete" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void finishAuthentication()}>Continue as {role}</button> : <Link className="button button-primary" href={next}>Continue</Link>}
+            <Link className="button button-primary" href={next}>
+              Continue
+            </Link>
             <button className="button button-secondary" type="button" disabled={busy} onClick={signOut}>
               Sign out
             </button>
@@ -187,12 +169,19 @@ function AuthPanel() {
   }
 
   const isCredentialsMode = mode === "sign-in" || mode === "sign-up";
-  const title = mode === "sign-up" ? "Start your account." : mode === "sign-in" ? "Welcome back." : mode === "forgot" ? "Reset your password." : "Choose a new password.";
+  const title =
+    mode === "sign-up"
+      ? "Start your website."
+      : mode === "sign-in"
+        ? "Welcome back."
+        : mode === "forgot"
+          ? "Reset your password."
+          : "Choose a new password.";
 
   return (
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
-        <p className="eyebrow">TSKC account</p>
+        <p className="eyebrow">TSKC for independent businesses</p>
         <h1 id="auth-title">{title}</h1>
         {isCredentialsMode && (
           <div className="auth-tabs" role="tablist" aria-label="Account mode">
@@ -221,11 +210,7 @@ function AuthPanel() {
         {isCredentialsMode && (
           <>
             <form className="auth-form" onSubmit={submitCredentials}>
-              <fieldset className="auth-roles">
-                <legend>I&apos;m here to</legend>
-                <label><input type="radio" name="role" value="seller" checked={role === "seller"} onChange={() => setRole("seller")} /> Sell digital goods</label>
-                <label><input type="radio" name="role" value="buyer" checked={role === "buyer"} onChange={() => setRole("buyer")} /> Buy from a store</label>
-              </fieldset>
+              <p className="auth-copy">One account is all you need to choose a plan and launch a branded website.</p>
               <label htmlFor="username">Username</label>
               <input id="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoComplete="username" />
               {mode === "sign-up" && <><label htmlFor="email">Email for password reset</label><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></>}
