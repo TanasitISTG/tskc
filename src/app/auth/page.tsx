@@ -177,6 +177,7 @@ function AuthPanel() {
     return (
       <main className="auth-page">
         <section className="auth-card" aria-labelledby="auth-title">
+          <Link className="auth-home-link" href="/">← Back to TSKC</Link>
           <p className="eyebrow">TSKC account</p>
           <h1 id="auth-title">Your account is ready.</h1>
           <p className="auth-copy">
@@ -208,6 +209,7 @@ function AuthPanel() {
   return (
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
+        <Link className="auth-home-link" href="/">← Back to TSKC</Link>
         <p className="eyebrow">TSKC for independent businesses</p>
         <h1 id="auth-title">{title}</h1>
         {isCredentialsMode && (
