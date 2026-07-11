@@ -15,6 +15,24 @@ describe("parseServerEnv", () => {
     );
   });
 
+  it("requires complete auth infrastructure in production", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "production",
+        PLATFORM_DOMAIN: "tskc.example",
+      }),
+    ).toThrow("DATABASE_URL is required in production");
+  });
+
+  it("rejects partial OAuth provider credentials", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "test",
+        GOOGLE_CLIENT_ID: "google-client-id",
+      }),
+    ).toThrow("Google OAuth configuration must set all or none of its variables");
+  });
+
   it("rejects partial R2 credentials", () => {
     expect(() =>
       parseServerEnv({
@@ -41,6 +59,12 @@ describe("parseServerEnv", () => {
         DATABASE_URL: "postgres://user:password@localhost:5432/tskc",
         BETTER_AUTH_SECRET: "a-secret-with-at-least-thirty-two-characters",
         BETTER_AUTH_URL: "https://tskc.example",
+        GOOGLE_CLIENT_ID: "google-client-id",
+        GOOGLE_CLIENT_SECRET: "google-client-secret",
+        FACEBOOK_CLIENT_ID: "facebook-client-id",
+        FACEBOOK_CLIENT_SECRET: "facebook-client-secret",
+        DISCORD_CLIENT_ID: "discord-client-id",
+        DISCORD_CLIENT_SECRET: "discord-client-secret",
         R2_ENDPOINT: "https://account.r2.cloudflarestorage.com",
         R2_BUCKET: "tskc-files",
         R2_ACCESS_KEY_ID: "access-key",
@@ -56,6 +80,9 @@ describe("parseServerEnv", () => {
       betterAuth: {
         secret: "a-secret-with-at-least-thirty-two-characters",
         url: "https://tskc.example",
+      },
+      google: {
+        clientId: "google-client-id",
       },
       r2: {
         endpoint: "https://account.r2.cloudflarestorage.com",

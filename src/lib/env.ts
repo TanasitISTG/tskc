@@ -11,6 +11,12 @@ const rawEnvSchema = z
     DATABASE_URL: nonEmptyString.optional(),
     BETTER_AUTH_SECRET: nonEmptyString.min(32).optional(),
     BETTER_AUTH_URL: nonEmptyString.url().optional(),
+    GOOGLE_CLIENT_ID: nonEmptyString.optional(),
+    GOOGLE_CLIENT_SECRET: nonEmptyString.optional(),
+    FACEBOOK_CLIENT_ID: nonEmptyString.optional(),
+    FACEBOOK_CLIENT_SECRET: nonEmptyString.optional(),
+    DISCORD_CLIENT_ID: nonEmptyString.optional(),
+    DISCORD_CLIENT_SECRET: nonEmptyString.optional(),
     R2_ENDPOINT: nonEmptyString.optional(),
     R2_BUCKET: nonEmptyString.optional(),
     R2_ACCESS_KEY_ID: nonEmptyString.optional(),
@@ -59,6 +65,18 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: env.BETTER_AUTH_URL,
   });
+  const google = allOrNone("Google OAuth", {
+    GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
+  });
+  const facebook = allOrNone("Facebook OAuth", {
+    FACEBOOK_CLIENT_ID: env.FACEBOOK_CLIENT_ID,
+    FACEBOOK_CLIENT_SECRET: env.FACEBOOK_CLIENT_SECRET,
+  });
+  const discord = allOrNone("Discord OAuth", {
+    DISCORD_CLIENT_ID: env.DISCORD_CLIENT_ID,
+    DISCORD_CLIENT_SECRET: env.DISCORD_CLIENT_SECRET,
+  });
   const resend = allOrNone("Resend", {
     RESEND_API_KEY: env.RESEND_API_KEY,
     RESEND_FROM: env.RESEND_FROM,
@@ -68,12 +86,34 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     SLIP2GO_API_KEY: env.SLIP2GO_API_KEY,
   });
 
+  if (env.NODE_ENV === "production") {
+    if (env.DATABASE_URL === undefined) {
+      throw new Error("DATABASE_URL is required in production");
+    }
+
+    if (betterAuth === undefined || resend === undefined || google === undefined || facebook === undefined || discord === undefined) {
+      throw new Error("Auth configuration is required in production");
+    }
+  }
+
   return {
     platformDomain: env.PLATFORM_DOMAIN ?? "localhost:3000",
     databaseUrl: env.DATABASE_URL,
     betterAuth: betterAuth && {
       secret: betterAuth.BETTER_AUTH_SECRET,
       url: betterAuth.BETTER_AUTH_URL,
+    },
+    google: google && {
+      clientId: google.GOOGLE_CLIENT_ID,
+      clientSecret: google.GOOGLE_CLIENT_SECRET,
+    },
+    facebook: facebook && {
+      clientId: facebook.FACEBOOK_CLIENT_ID,
+      clientSecret: facebook.FACEBOOK_CLIENT_SECRET,
+    },
+    discord: discord && {
+      clientId: discord.DISCORD_CLIENT_ID,
+      clientSecret: discord.DISCORD_CLIENT_SECRET,
     },
     r2: r2 && {
       endpoint: r2.R2_ENDPOINT,
