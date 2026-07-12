@@ -333,15 +333,15 @@ function AuthPanel() {
             >
               <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
                 <Skeleton className="h-4 w-24" aria-hidden="true" />
-                <Skeleton className="h-9 w-20" aria-hidden="true" />
+                <Skeleton className="h-7 w-20" aria-hidden="true" />
               </div>
               <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
                 <Skeleton className="h-4 w-28" aria-hidden="true" />
-                <Skeleton className="h-9 w-20" aria-hidden="true" />
+                <Skeleton className="h-7 w-20" aria-hidden="true" />
               </div>
               <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
                 <Skeleton className="h-4 w-20" aria-hidden="true" />
-                <Skeleton className="h-9 w-24" aria-hidden="true" />
+                <Skeleton className="h-7 w-24" aria-hidden="true" />
               </div>
             </div>
           )}

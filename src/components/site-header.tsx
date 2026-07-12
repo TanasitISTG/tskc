@@ -8,7 +8,6 @@ import { LANDING_AUTH_HREF } from "@/lib/landing";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -75,7 +74,6 @@ export function SiteHeader() {
           <SheetContent className="w-[min(22rem,88vw)] border-border bg-popover p-0">
             <SheetHeader className="pt-8">
               <SheetTitle>TSKC</SheetTitle>
-              <SheetDescription>Branded websites for independent businesses.</SheetDescription>
             </SheetHeader>
             <nav className="flex flex-col px-4 pb-8" aria-label="Mobile navigation">
               {navItems.map(([label, href]) => (
