@@ -24,16 +24,16 @@ TSKC is not a marketplace, a multi-vendor commerce platform, or a buyer-wallet p
 
 ## Technology Stack
 
-| Layer | Choice | Responsibility |
-| --- | --- | --- |
-| Web application | Next.js App Router | Public marketing, seller account, website setup, and public branded sites. |
-| Authentication | Better Auth | Username/password, Google, Discord, secure sessions, and password reset. |
-| Database | Neon PostgreSQL + Drizzle ORM | Authentication persistence, subscriptions, website configuration, and future tenant data. |
-| API | tRPC | Typed server procedures. Protected procedures resolve the session on every request. |
-| Email | Resend | Password-reset links only. |
-| Hosting | Vercel | Next.js deployment and future branded-site host resolution. |
-| UI | shadcn/ui Base UI + Tailwind CSS v4 | Owned accessible components and dark-canvas interface following `DESIGN.md`. |
-| Tooling | Bun, TypeScript, Vitest, ESLint | Runtime, package manager, tests, and quality checks. |
+| Layer           | Choice                              | Responsibility                                                                            |
+| --------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| Web application | Next.js App Router                  | Public marketing, seller account, website setup, and public branded sites.                |
+| Authentication  | Better Auth                         | Username/password, Google, Discord, secure sessions, and password reset.                  |
+| Database        | Neon PostgreSQL + Drizzle ORM       | Authentication persistence, subscriptions, website configuration, and future tenant data. |
+| API             | tRPC                                | Typed server procedures. Protected procedures resolve the session on every request.       |
+| Email           | Resend                              | Password-reset links only.                                                                |
+| Hosting         | Vercel                              | Next.js deployment and future branded-site host resolution.                               |
+| UI              | shadcn/ui Base UI + Tailwind CSS v4 | Owned accessible components and dark-canvas interface following `DESIGN.md`.              |
+| Tooling         | Bun, TypeScript, Vitest, ESLint     | Runtime, package manager, tests, and quality checks.                                      |
 
 ## Security and Operational Rules
 

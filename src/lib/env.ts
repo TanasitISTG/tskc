@@ -31,9 +31,7 @@ function allOrNone(
   values: Record<string, string | undefined>,
 ): Record<string, string> | undefined {
   const entries = Object.entries(values);
-  const configured = entries.filter(
-    (entry): entry is [string, string] => entry[1] !== undefined,
-  );
+  const configured = entries.filter((entry): entry is [string, string] => entry[1] !== undefined);
 
   if (configured.length === 0) {
     return undefined;
@@ -85,7 +83,12 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
       throw new Error("DATABASE_URL is required in production");
     }
 
-    if (betterAuth === undefined || resend === undefined || google === undefined || discord === undefined) {
+    if (
+      betterAuth === undefined ||
+      resend === undefined ||
+      google === undefined ||
+      discord === undefined
+    ) {
       throw new Error("Auth configuration is required in production");
     }
   }

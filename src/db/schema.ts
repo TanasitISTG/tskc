@@ -44,10 +44,7 @@ export const account = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
-    uniqueIndex("account_provider_account_id_unique").on(
-      table.providerId,
-      table.accountId,
-    ),
+    uniqueIndex("account_provider_account_id_unique").on(table.providerId, table.accountId),
   ],
 );
 

@@ -14,9 +14,7 @@ export function safeReturnTo(next: string | null | undefined): string {
   return next?.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
-export function requireSession(
-  identity: AuthIdentity | null,
-): AuthIdentity {
+export function requireSession(identity: AuthIdentity | null): AuthIdentity {
   if (identity === null) {
     throw new AuthError("UNAUTHORIZED");
   }

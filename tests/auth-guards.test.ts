@@ -1,16 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  AuthError,
-  requireSession,
-  safeReturnTo,
-} from "@/lib/auth-guards";
+import { AuthError, requireSession, safeReturnTo } from "@/lib/auth-guards";
 
 describe("safeReturnTo", () => {
   it("accepts an internal return path", () => {
-    expect(safeReturnTo("/setup/website?step=identity")).toBe(
-      "/setup/website?step=identity",
-    );
+    expect(safeReturnTo("/setup/website?step=identity")).toBe("/setup/website?step=identity");
   });
 
   it("falls back to home for external or protocol-relative paths", () => {

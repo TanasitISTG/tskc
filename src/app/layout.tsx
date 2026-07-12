@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 
-const description = "TSKC gives independent businesses a direct, branded website through one simple plan.";
+const description =
+  "TSKC gives independent businesses a direct, branded website through one simple plan.";
 
 export const metadata: Metadata = {
   title: {

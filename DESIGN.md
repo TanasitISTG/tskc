@@ -13,16 +13,16 @@ TSKC sells one branded-website subscription to independent businesses. The inter
 
 ## Tokens
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `--canvas` | `#090909` | Page background |
-| `--surface-1` | `#181818` | Cards and raised controls |
-| `--surface-2` | `#262626` | Selected controls and featured plan card |
-| `--hairline` | `#363636` | Form borders |
-| `--hairline-soft` | `#252525` | Section and list dividers |
-| `--ink` | `#ffffff` | Headings and strong text |
-| `--ink-muted` | `#999999` | Supporting text |
-| `--accent-blue` | `#72adff` | Focus indicators and links only |
+| Token             | Value     | Use                                      |
+| ----------------- | --------- | ---------------------------------------- |
+| `--canvas`        | `#090909` | Page background                          |
+| `--surface-1`     | `#181818` | Cards and raised controls                |
+| `--surface-2`     | `#262626` | Selected controls and featured plan card |
+| `--hairline`      | `#363636` | Form borders                             |
+| `--hairline-soft` | `#252525` | Section and list dividers                |
+| `--ink`           | `#ffffff` | Headings and strong text                 |
+| `--ink-muted`     | `#999999` | Supporting text                          |
+| `--accent-blue`   | `#72adff` | Focus indicators and links only          |
 
 ## Components
 

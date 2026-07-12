@@ -7,7 +7,10 @@ function localDatabaseUrl() {
       /^DATABASE_URL=(?:"([^"]*)"|'([^']*)'|([^\r\n]*))$/m,
     );
 
-    return values?.slice(1).find((value) => value !== undefined)?.trim();
+    return values
+      ?.slice(1)
+      .find((value) => value !== undefined)
+      ?.trim();
   } catch {
     return undefined;
   }
