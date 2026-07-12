@@ -324,9 +324,25 @@ function AuthPanel() {
             Connect another method to sign in to this account.
           </p>
           {accountsStatus === "loading" && (
-            <p className="mt-5 text-sm text-muted-foreground" role="status">
-              Loading sign-in methods...
-            </p>
+            <div
+              className="mt-5 grid gap-3"
+              role="status"
+              aria-label="Loading sign-in methods"
+              aria-busy="true"
+            >
+              <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted" aria-hidden="true" />
+                <div className="h-9 w-20 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+              </div>
+              <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+                <div className="h-4 w-28 animate-pulse rounded bg-muted" aria-hidden="true" />
+                <div className="h-9 w-20 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+              </div>
+              <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+                <div className="h-4 w-20 animate-pulse rounded bg-muted" aria-hidden="true" />
+                <div className="h-9 w-24 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+              </div>
+            </div>
           )}
           {accountsStatus === "error" && (
             <Alert variant="destructive" className="mt-5" role="alert">

@@ -64,4 +64,10 @@ describe("landing page contract", () => {
     );
     expect(authSource).toContain("await refetch();");
   });
+
+  it("uses an accessible skeleton while sign-in methods load", () => {
+    expect(authSource).toContain('aria-label="Loading sign-in methods"');
+    expect(authSource).toContain('aria-busy="true"');
+    expect(authSource).toContain("animate-pulse");
+  });
 });
