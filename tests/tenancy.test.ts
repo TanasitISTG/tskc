@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  RESERVED_SUBDOMAINS,
-  normalizeSubdomain,
-  resolveHost,
-} from "@/lib/tenancy";
+import { RESERVED_SUBDOMAINS, normalizeSubdomain, resolveHost } from "@/lib/tenancy";
 
 describe("normalizeSubdomain", () => {
   it("trims and lowercases a valid DNS label", () => {

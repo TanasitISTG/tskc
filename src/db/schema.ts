@@ -1,6 +1,8 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   integer,
   pgTable,
   text,
@@ -19,6 +21,34 @@ export const user = pgTable("user", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
+
+export const shop = pgTable(
+  "shop",
+  {
+    id: text("id").primaryKey(),
+    subdomain: text("subdomain").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check("shop_subdomain_normalized", sql`subdomain = lower(trim(subdomain))`),
+    uniqueIndex("shop_subdomain_unique").on(table.subdomain),
+  ],
+);
+
+export const shopMembership = pgTable(
+  "shop_membership",
+  {
+    shopId: text("shop_id")
+      .primaryKey()
+      .references(() => shop.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [uniqueIndex("shop_membership_user_id_unique").on(table.userId)],
+);
 
 export const account = pgTable(
   "account",

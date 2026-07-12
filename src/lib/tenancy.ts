@@ -20,10 +20,7 @@ export function normalizeSubdomain(value: string) {
   return subdomainSchema.parse(value);
 }
 
-export function resolveHost(
-  host: string | null,
-  platformDomain: string,
-): HostContext {
+export function resolveHost(host: string | null, platformDomain: string): HostContext {
   const normalizedPlatformDomain = platformDomain.trim().toLowerCase();
   const normalizedHost = host?.trim().toLowerCase();
 
