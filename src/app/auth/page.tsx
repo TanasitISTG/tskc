@@ -184,7 +184,7 @@ function AuthPanel() {
     try {
       const result = await authClient.signIn.social({
         provider,
-        callbackURL: `${window.location.origin}/auth?next=${encodeURIComponent(next)}`,
+        callbackURL: `${window.location.origin}${next}`,
       });
       if (result.error)
         setMessage({

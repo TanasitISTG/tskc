@@ -53,4 +53,8 @@ describe("landing page contract", () => {
   it("defaults direct account entry to the first incomplete step", () => {
     expect(authSource).toContain("FIRST_INCOMPLETE_STEP");
   });
+
+  it("sends social sign-in directly to the protected continuation", () => {
+    expect(authSource).toContain("callbackURL: `${window.location.origin}${next}`");
+  });
 });

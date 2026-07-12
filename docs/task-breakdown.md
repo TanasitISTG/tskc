@@ -97,7 +97,7 @@ Every task must meet these rules:
 
 ## Task 3: Seller accounts, sessions, and protected entry
 
-**Status:** Auth primitives are implemented and tested. The post-auth business destination and final runtime verification remain.
+**Status:** Auth primitives and post-auth continuation are implemented. Provider-backed manual auth flows remain to be exercised before this task is fully closed.
 
 **Description:** Finish the single-seller account flow using the existing Better Auth integration. Preserve explicit account linking, generic password-reset responses, synthetic OAuth handling, safe return paths, and server-side session ownership. After sign-in, send the seller to the first incomplete protected step rather than defaulting to the public landing page.
 
@@ -113,13 +113,13 @@ Every task must meet these rules:
 - [ ] Password reset always returns generic-success copy, and the reset token flow handles missing, expired, invalid, and successful tokens without leaking account existence.
 - [ ] Sign-out revokes the session and returns to the platform landing page.
 - [ ] `next` accepts only a same-origin path beginning with exactly one `/`; invalid and protocol-relative values fall back safely.
-- [ ] The default authenticated continuation points to the first incomplete protected step (plan selection once billing exists), while an explicit valid `next` is preserved.
+- [x] The default authenticated continuation points to the first incomplete protected step (plan selection once billing exists), while an explicit valid `next` is preserved.
 - [ ] Protected tRPC/server procedures reject missing sessions and expose only the authenticated seller identity.
 - [ ] Known Better Auth errors, including `account_not_linked`, render branded recovery guidance with a clear route back to sign-in.
 
 **Verification:**
 
-- [ ] Keep the existing auth-account, auth-guards, Resend, environment, and tRPC tests green; add regression coverage for the post-auth continuation.
+- [x] Keep the existing auth-account, auth-guards, Resend, environment, and tRPC tests green; add regression coverage for the post-auth continuation.
 - [ ] Manually test registration, sign-in, sign-out, password reset, Google/Discord callbacks, explicit provider linking, and an invalid `next` value.
 - [ ] Confirm production configuration fails closed when database, Better Auth, OAuth, or Resend settings are incomplete.
 
