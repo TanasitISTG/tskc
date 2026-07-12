@@ -42,7 +42,7 @@ Every task must meet these rules:
 
 ## Task 1: Foundation, canonical ownership, and migration safety
 
-**Status:** The Next.js/Bun/TypeScript/Drizzle/Vitest baseline exists. The v1 domain model and migration plan still need to be made explicit.
+**Status:** Implemented; disposable PostgreSQL migration application remains the only unchecked verification.
 
 **Description:** Keep the existing stack and establish the smallest schema that supports one seller, one website, one plan, and one subscription. Reconcile the current `shop` / `shop_membership` code with ADR-001 before adding more domain data. The ownership table may remain only if it represents one-to-one website ownership rather than application roles; otherwise replace it with a direct owner relation. Do not carry a generic role model into v1.
 
@@ -52,24 +52,25 @@ Every task must meet these rules:
 
 **Acceptance criteria:**
 
-- [ ] The canonical v1 ownership model is written down: one authenticated seller owns at most one website and no application role is persisted or selected.
-- [ ] `shop` / `shop_membership` is either reduced to that ownership invariant or replaced; no unused role enum or application-role join table remains.
+- [x] The canonical v1 ownership model is written down: one authenticated seller owns at most one website and no application role is persisted or selected.
+- [x] `shop` / `shop_membership` is either reduced to that ownership invariant or replaced; no unused role enum or application-role join table remains.
 - [ ] A fresh database can apply the complete migration sequence without manual edits.
-- [ ] A database that has already applied an old baseline uses a separately reviewed expand/contract migration; no applied migration is rewritten in place.
-- [ ] `.env.example` documents only agreed integrations. Current `SLIP2GO_*` variables are not treated as an accepted payment-provider decision.
-- [ ] Server-only secrets, OAuth credentials, payment credentials, and reset tokens cannot enter browser bundles or public website data.
+- [x] A database that has already applied an old baseline uses a separately reviewed expand/contract migration; no applied migration is rewritten in place.
+- [x] `.env.example` documents only agreed integrations. Current `SLIP2GO_*` variables are not treated as an accepted payment-provider decision.
+- [x] Server-only secrets, OAuth credentials, payment credentials, and reset tokens cannot enter browser bundles or public website data.
 
 **Verification:**
 
-- [ ] Run `bun run db:generate` and review the generated SQL and snapshot diff.
+- [x] Run `bun run db:generate` and review the generated SQL and snapshot diff.
+- [x] Run `tests/migration-safety.test.ts` to confirm legacy role cleanup is additive and schema-qualified.
 - [ ] Apply migrations to a disposable PostgreSQL database, then run the schema and ownership tests.
-- [ ] Run `bun run fmt:check`, `bun run lint`, `bun run typecheck`, and `bun test`.
+- [x] Run `bun run fmt:check`, `bun run lint`, `bun run typecheck`, and `bun test`.
 
 **Estimated scope:** Medium; larger only if an already-used migration requires expand/contract cleanup.
 
 ## Task 2: Public product landing page
 
-**Status:** The page and visual direction exist; content-rule and CTA verification remain.
+**Status:** Complete.
 
 **Description:** Make the platform host clearly sell one THB 149/month branded-website plan and lead visitors into the account flow. The page should describe the positive business outcome and the short setup path, not rejected marketplace concepts.
 
@@ -79,18 +80,18 @@ Every task must meet these rules:
 
 **Acceptance criteria:**
 
-- [ ] The platform host renders the landing page; a seller host never renders the platform landing page.
-- [ ] The page presents exactly one branded-website plan at THB 149/month with one primary account CTA and a clear sign-in path.
-- [ ] CTA links enter `/auth` and preserve a safe internal continuation path for the first incomplete seller step.
-- [ ] Copy follows `DESIGN.md`: use seller, business owner, branded website, and plan language; remove rejected-commerce vocabulary from user-facing landing copy.
-- [ ] The page has the required responsive layout, accessible headings and landmarks, keyboard navigation, visible focus, and no horizontal overflow at 320px.
-- [ ] The pricing card, website preview, and feature tiles remain within the dark design tokens and component rules.
+- [x] The platform host renders the landing page; a seller host never renders the platform landing page.
+- [x] The page presents exactly one branded-website plan at THB 149/month with one primary account CTA and a clear sign-in path.
+- [x] CTA links enter `/auth` and preserve a safe internal continuation path for the first incomplete seller step.
+- [x] Copy follows `DESIGN.md`: use seller, business owner, branded website, and plan language; remove rejected-commerce vocabulary from user-facing landing copy.
+- [x] The page has the required responsive layout, accessible headings and landmarks, keyboard navigation, visible focus, and no horizontal overflow at 320px.
+- [x] The pricing card, website preview, and feature tiles remain within the dark design tokens and component rules.
 
 **Verification:**
 
-- [ ] Run the landing page at the platform host in development and check desktop, 810px, and 320px widths.
-- [ ] Keyboard-tab through navigation, CTA links, FAQ controls, and the mobile menu.
-- [ ] Run `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build`.
+- [x] Run the landing page at the platform host in development and check desktop, 810px, and 320px widths.
+- [x] Keyboard-tab through navigation, CTA links, FAQ controls, and the mobile menu.
+- [x] Run the landing contract tests and `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build`.
 
 **Estimated scope:** Small.
 

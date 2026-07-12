@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasProvider, isSyntheticEmail, type Provider } from "@/lib/auth-account";
 import { authClient } from "@/lib/auth-client";
+import { FIRST_INCOMPLETE_STEP } from "@/lib/landing";
 
 type Mode = "sign-in" | "sign-up" | "forgot" | "reset";
 type PendingAction = Mode | Provider | "sign-out";
@@ -54,7 +55,7 @@ function ProviderIcon({ provider }: { provider: Provider }) {
 }
 
 function internalPath(value: string | null): string {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
+  return value?.startsWith("/") && !value.startsWith("//") ? value : FIRST_INCOMPLETE_STEP;
 }
 
 function errorMessage(error: unknown): string {
@@ -87,7 +88,9 @@ function AuthMessage({ message }: { message: Message | null }) {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-background" aria-busy="true" />}>
+    <Suspense
+      fallback={<main id="main-content" className="min-h-screen bg-background" aria-busy="true" />}
+    >
       <AuthPanel />
     </Suspense>
   );
@@ -279,7 +282,8 @@ function AuthPanel() {
     }
   }
 
-  if (sessionPending) return <main className="min-h-screen bg-background" aria-busy="true" />;
+  if (sessionPending)
+    return <main id="main-content" className="min-h-screen bg-background" aria-busy="true" />;
 
   if (session && mode !== "forgot" && mode !== "reset") {
     return (
@@ -596,7 +600,10 @@ function AuthPanel() {
 
 function AuthFrame({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10 sm:px-8">
+    <main
+      id="main-content"
+      className="flex min-h-screen items-center justify-center bg-background px-5 py-10 sm:px-8"
+    >
       <Card className="w-full max-w-xl gap-0 border-0 bg-card py-0 shadow-2xl ring-1 ring-foreground/10">
         <CardContent className="p-7 sm:p-10">
           <Link

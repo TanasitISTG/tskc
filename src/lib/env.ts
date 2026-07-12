@@ -21,8 +21,6 @@ const rawEnvSchema = z
     R2_SECRET_ACCESS_KEY: nonEmptyString.optional(),
     RESEND_API_KEY: nonEmptyString.optional(),
     RESEND_FROM: nonEmptyString.optional(),
-    SLIP2GO_BASE_URL: nonEmptyString.url().optional(),
-    SLIP2GO_API_KEY: nonEmptyString.optional(),
   })
   .passthrough();
 
@@ -73,11 +71,6 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     RESEND_API_KEY: env.RESEND_API_KEY,
     RESEND_FROM: env.RESEND_FROM,
   });
-  const slip2Go = allOrNone("Slip2Go", {
-    SLIP2GO_BASE_URL: env.SLIP2GO_BASE_URL,
-    SLIP2GO_API_KEY: env.SLIP2GO_API_KEY,
-  });
-
   if (env.NODE_ENV === "production") {
     if (env.DATABASE_URL === undefined) {
       throw new Error("DATABASE_URL is required in production");
@@ -117,10 +110,6 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     resend: resend && {
       apiKey: resend.RESEND_API_KEY,
       from: resend.RESEND_FROM,
-    },
-    slip2Go: slip2Go && {
-      baseUrl: slip2Go.SLIP2GO_BASE_URL,
-      apiKey: slip2Go.SLIP2GO_API_KEY,
     },
   };
 }

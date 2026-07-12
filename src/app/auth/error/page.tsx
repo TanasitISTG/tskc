@@ -14,7 +14,10 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
   const details = authErrorDetails(typeof error === "string" ? error : null);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10 sm:px-8">
+    <main
+      id="main-content"
+      className="flex min-h-screen items-center justify-center bg-background px-5 py-10 sm:px-8"
+    >
       <Card className="w-full max-w-xl gap-0 border-0 bg-card py-0 shadow-2xl ring-1 ring-foreground/10">
         <CardContent className="p-7 sm:p-10">
           <Link

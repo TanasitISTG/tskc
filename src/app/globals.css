@@ -73,6 +73,11 @@
     scroll-behavior: smooth;
   }
 
+  section[id],
+  main[id="main-content"] {
+    scroll-margin-top: 1.5rem;
+  }
+
   body {
     @apply min-w-80 bg-background text-foreground antialiased;
     font-family: Inter, "Helvetica Neue", Arial, sans-serif;
@@ -88,5 +93,13 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
   }
 }

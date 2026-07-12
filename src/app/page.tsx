@@ -12,13 +12,14 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { parseServerEnv } from "@/lib/env";
+import { LANDING_AUTH_HREF } from "@/lib/landing";
 import { resolveRequestTenant } from "@/server/request-context";
 
 const faqs = [
   {
-    question: "What am I buying?",
+    question: "What do I get?",
     answer:
-      "A single subscription plan for your own branded website. It is a home for your business, not a marketplace account.",
+      "A single subscription plan for your own branded website: a focused home for your business online.",
   },
   {
     question: "Do my visitors need TSKC accounts?",
@@ -38,12 +39,14 @@ const eyebrowClass = "text-xs font-semibold tracking-[0.08em] text-muted-foregro
 
 function StorefrontPlaceholder() {
   return (
-    <main className="grid min-h-screen place-items-center px-6 py-24">
+    <main id="main-content" className="grid min-h-screen place-items-center px-6 py-24">
       <div className="w-full max-w-xl text-center">
         <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-          TSKC storefront
+          TSKC branded website
         </p>
-        <h1 className="mt-4 text-5xl font-semibold tracking-[-0.06em]">Storefront coming soon.</h1>
+        <h1 className="mt-4 text-5xl font-semibold tracking-[-0.06em]">
+          Branded website coming soon.
+        </h1>
         <p className="mt-5 text-base leading-relaxed text-muted-foreground">
           This seller&apos;s website is being prepared.
         </p>
@@ -67,7 +70,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="overflow-clip">
+    <main id="main-content" className="overflow-clip">
       <SiteHeader />
 
       <section
@@ -91,7 +94,7 @@ export default async function Home() {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
             <Link
               className={buttonVariants({ size: "lg", className: "h-11 rounded-full px-5" })}
-              href="/auth"
+              href={LANDING_AUTH_HREF}
             >
               Choose your plan
             </Link>
@@ -239,7 +242,7 @@ export default async function Home() {
         aria-labelledby="pricing-title"
       >
         <div>
-          <p className={eyebrowClass}>One plan. No role selection.</p>
+          <p className={eyebrowClass}>One plan. A clear starting point.</p>
           <h2
             id="pricing-title"
             className="mt-5 text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-6xl"
@@ -249,8 +252,8 @@ export default async function Home() {
             with your website.
           </h2>
           <p className="mt-7 max-w-lg text-base leading-relaxed text-muted-foreground">
-            There is no buyer side, marketplace catalogue, or separate seller tier. You subscribe as
-            the business owner.
+            One straightforward plan gives business owners a clear starting point for a direct web
+            presence.
           </p>
         </div>
         <Card className="gap-0 border-0 bg-card py-0 ring-1 ring-foreground/10">
@@ -270,7 +273,7 @@ export default async function Home() {
             </ul>
             <Link
               className={buttonVariants({ size: "lg", className: "mt-8 h-11 w-full rounded-full" })}
-              href="/auth"
+              href={LANDING_AUTH_HREF}
             >
               Get your website
             </Link>
@@ -325,7 +328,7 @@ export default async function Home() {
         </h2>
         <Link
           className={buttonVariants({ size: "lg", className: "mt-8 h-11 rounded-full px-6" })}
-          href="/auth"
+          href={LANDING_AUTH_HREF}
         >
           Choose your plan
         </Link>

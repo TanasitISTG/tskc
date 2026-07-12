@@ -51,6 +51,16 @@ describe("parseServerEnv", () => {
     ).toThrow("Better Auth configuration must set all or none of its variables");
   });
 
+  it("does not expose unapproved payment-provider configuration", () => {
+    expect(
+      parseServerEnv({
+        NODE_ENV: "test",
+        SLIP2GO_BASE_URL: "https://api.slip2go.example",
+        SLIP2GO_API_KEY: "slip2go-key",
+      }),
+    ).not.toHaveProperty("slip2Go");
+  });
+
   it("returns fully configured integration groups", () => {
     expect(
       parseServerEnv({
@@ -69,8 +79,6 @@ describe("parseServerEnv", () => {
         R2_SECRET_ACCESS_KEY: "secret-key",
         RESEND_API_KEY: "re_test",
         RESEND_FROM: "TSKC <noreply@tskc.example>",
-        SLIP2GO_BASE_URL: "https://api.slip2go.example",
-        SLIP2GO_API_KEY: "slip2go-key",
       }),
     ).toMatchObject({
       platformDomain: "tskc.example",
@@ -89,10 +97,6 @@ describe("parseServerEnv", () => {
       resend: {
         apiKey: "re_test",
         from: "TSKC <noreply@tskc.example>",
-      },
-      slip2Go: {
-        baseUrl: "https://api.slip2go.example",
-        apiKey: "slip2go-key",
       },
     });
   });

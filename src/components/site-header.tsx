@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MenuIcon } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { LANDING_AUTH_HREF } from "@/lib/landing";
 import {
   Sheet,
   SheetContent,
@@ -52,7 +53,7 @@ export function SiteHeader() {
         </Link>
         <Link
           className={buttonVariants({ size: "lg", className: "h-11 rounded-full px-5" })}
-          href="/auth"
+          href={LANDING_AUTH_HREF}
         >
           Get your website
         </Link>
@@ -91,7 +92,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 className={buttonVariants({ size: "lg", className: "mt-4 h-11 rounded-full" })}
-                href="/auth"
+                href={LANDING_AUTH_HREF}
               >
                 Get your website
               </Link>
