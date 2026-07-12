@@ -21,6 +21,10 @@ const setupSource = readFileSync(
   "utf8",
 );
 const authSource = readFileSync(resolve(import.meta.dirname, "../src/app/auth/page.tsx"), "utf8");
+const skeletonSource = readFileSync(
+  resolve(import.meta.dirname, "../src/components/ui/skeleton.tsx"),
+  "utf8",
+);
 
 describe("landing page contract", () => {
   it("uses direct branded-website language", () => {
@@ -65,9 +69,13 @@ describe("landing page contract", () => {
     expect(authSource).toContain("await refetch();");
   });
 
-  it("uses an accessible skeleton while sign-in methods load", () => {
+  it("uses shadcn's accessible skeleton while sign-in methods load", () => {
+    expect(authSource).toContain('import { Skeleton } from "@/components/ui/skeleton";');
+    expect(authSource).toContain("<Skeleton");
+    expect(authSource).not.toContain("animate-pulse");
+    expect(skeletonSource).toContain('data-slot="skeleton"');
+    expect(skeletonSource).toContain("animate-pulse");
     expect(authSource).toContain('aria-label="Loading sign-in methods"');
     expect(authSource).toContain('aria-busy="true"');
-    expect(authSource).toContain("animate-pulse");
   });
 });

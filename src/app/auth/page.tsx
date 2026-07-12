@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasProvider, isSyntheticEmail, type Provider } from "@/lib/auth-account";
@@ -331,16 +332,16 @@ function AuthPanel() {
               aria-busy="true"
             >
               <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
-                <div className="h-4 w-24 animate-pulse rounded bg-muted" aria-hidden="true" />
-                <div className="h-9 w-20 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+                <Skeleton className="h-4 w-24" aria-hidden="true" />
+                <Skeleton className="h-9 w-20" aria-hidden="true" />
               </div>
               <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
-                <div className="h-4 w-28 animate-pulse rounded bg-muted" aria-hidden="true" />
-                <div className="h-9 w-20 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+                <Skeleton className="h-4 w-28" aria-hidden="true" />
+                <Skeleton className="h-9 w-20" aria-hidden="true" />
               </div>
               <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
-                <div className="h-4 w-20 animate-pulse rounded bg-muted" aria-hidden="true" />
-                <div className="h-9 w-24 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+                <Skeleton className="h-4 w-20" aria-hidden="true" />
+                <Skeleton className="h-9 w-24" aria-hidden="true" />
               </div>
             </div>
           )}
