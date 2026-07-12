@@ -1,100 +1,94 @@
 import Link from "next/link";
 
+import { SiteHeader } from "@/components/site-header";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
 const faqs = [
   {
     question: "What am I buying?",
-    answer:
-      "A single subscription plan for your own branded website. It is a home for your business, not a marketplace account.",
+    answer: "A single subscription plan for your own branded website. It is a home for your business, not a marketplace account.",
   },
   {
     question: "Do my visitors need TSKC accounts?",
-    answer:
-      "No. TSKC is built around your business having a direct web presence. Visitor account features are not part of this product model.",
+    answer: "No. TSKC is built around your business having a direct web presence. Visitor account features are not part of this product model.",
   },
   {
     question: "Can I start with one plan?",
-    answer:
-      "Yes. The first release has one straightforward monthly plan, so every seller gets the same clear starting point.",
+    answer: "Yes. The first release has one straightforward monthly plan, so every seller gets the same clear starting point.",
   },
 ];
 
+const sectionClass = "mx-auto w-[min(1200px,calc(100%-40px))] md:w-[min(1200px,calc(100%-clamp(40px,8vw,96px)))]";
+const eyebrowClass = "text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase";
+
 export default function Home() {
   return (
-    <main className="site-shell">
-      <header className="site-header">
-        <Link className="brand" href="#top" aria-label="TSKC home">TSKC</Link>
-        <nav className="desktop-nav" aria-label="Main navigation">
-          <a href="#website">Your website</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#pricing">Plan</a>
-        </nav>
-        <div className="header-actions">
-          <Link className="button button-secondary sign-in-link" href="/auth">Sign in</Link>
-          <Link className="button button-primary" href="/auth">Get your website</Link>
-        </div>
-        <details className="mobile-nav">
-          <summary aria-label="Open navigation menu"><span /><span /></summary>
-          <nav aria-label="Mobile navigation">
-            <a href="#website">Your website</a>
-            <a href="#how-it-works">How it works</a>
-            <a href="#pricing">Plan</a>
-            <Link href="/auth">Sign in</Link>
-          </nav>
-        </details>
-      </header>
+    <main className="overflow-clip">
+      <SiteHeader />
 
-      <section className="hero section" id="top" aria-labelledby="hero-title">
-        <p className="eyebrow">A home online for independent businesses</p>
-        <h1 id="hero-title">Your brand<br />deserves its own site.</h1>
-        <div className="hero-bottom">
-          <p>TSKC sells one simple plan: a branded website that gives your business a clear, professional place to live online.</p>
-          <div className="hero-actions">
-            <Link className="button button-primary" href="/auth">Choose your plan</Link>
-            <a className="text-link" href="#website">See what&apos;s included <span aria-hidden="true">↘</span></a>
+      <section className={`${sectionClass} pb-24 pt-20 sm:pb-36 sm:pt-32`} id="top" aria-labelledby="hero-title">
+        <h1 id="hero-title" className="max-w-4xl text-[clamp(3.25rem,9vw,7.5rem)] font-semibold leading-[0.88] tracking-[-0.085em]">Your brand<br />deserves its own site.</h1>
+        <div className="mt-12 grid gap-8 border-t border-border pt-7 md:mt-20 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16">
+          <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">TSKC sells one simple plan: a branded website that gives your business a clear, professional place to live online.</p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+            <Link className={buttonVariants({ size: "lg", className: "h-11 rounded-full px-5" })} href="/auth">Choose your plan</Link>
+            <a className="min-h-11 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-ring" href="#website">See what&apos;s included <span aria-hidden="true">→</span></a>
           </div>
         </div>
       </section>
 
-      <section className="section website-section" id="website" aria-labelledby="website-title">
-        <div className="section-heading">
-          <p className="eyebrow">One account. One branded website.</p>
-          <h2 id="website-title">A direct home for<br />your business.</h2>
+      <section className={`${sectionClass} border-t border-border py-24 sm:py-36`} id="website" aria-labelledby="website-title">
+        <div className="mb-12 grid gap-5 md:mb-16 md:grid-cols-2">
+          <p className={eyebrowClass}>One account. One branded website.</p>
+          <h2 id="website-title" className="text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-6xl">A direct home for<br />your business.</h2>
         </div>
-        <div className="website-grid">
-          <article className="workflow-copy"><p className="step-number">01</p><h3>Make it recognisably yours</h3><p>Bring together your business name, visual identity, and essential information in one calm, professional destination.</p></article>
-          <article className="workflow-copy"><p className="step-number">02</p><h3>Keep the message clear</h3><p>Give visitors a focused place to understand who you are, what you offer, and how to reach you.</p></article>
-          <div className="site-mockup" aria-label="Example branded business website">
-            <div className="mockup-bar"><span /> <span /> <span /></div>
-            <p className="mockup-brand">SORA STUDIO</p>
-            <div className="mockup-hero">A considered<br />home for work<br />with character.</div>
-            <div className="mockup-nav"><span>About</span><span>Work</span><span>Contact</span></div>
+        <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-2">
+          <article className="min-h-64 bg-background p-7 sm:p-9"><p className="text-sm text-muted-foreground">01</p><h3 className="mt-12 text-2xl font-semibold tracking-[-0.045em]">Make it recognisably yours</h3><p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">Bring together your business name, visual identity, and essential information in one calm, professional destination.</p></article>
+          <article className="min-h-64 bg-background p-7 sm:p-9"><p className="text-sm text-muted-foreground">02</p><h3 className="mt-12 text-2xl font-semibold tracking-[-0.045em]">Keep the message clear</h3><p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">Give visitors a focused place to understand who you are, what you offer, and how to reach you.</p></article>
+          <div className="min-h-80 bg-[#d9d4cc] p-4 text-[#151515] lg:col-span-2" aria-label="Example branded business website">
+            <div className="flex h-full min-h-72 flex-col border border-black/20 bg-[#f4f1eb] p-5 sm:p-8">
+              <div className="flex gap-1.5"><span className="size-2 rounded-full bg-black/25" /><span className="size-2 rounded-full bg-black/25" /><span className="size-2 rounded-full bg-black/25" /></div>
+              <p className="mt-8 text-xs font-bold tracking-[0.13em]">SORA STUDIO</p>
+              <p className="mt-auto text-[clamp(2rem,6vw,4.5rem)] leading-[0.92] tracking-[-0.075em]">A considered<br />home for work<br />with character.</p>
+              <div className="mt-8 flex gap-5 text-xs"><span>About</span><span>Work</span><span>Contact</span></div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="section steps-section" id="how-it-works" aria-labelledby="steps-title">
-        <div className="section-heading compact-heading"><p className="eyebrow">From plan to presence</p><h2 id="steps-title">A short path to<br />your own corner<br />of the web.</h2></div>
-        <div className="product-grid">
-          <article className="product-card spotlight-violet"><p className="card-kicker">Choose the plan</p><h3>One clear<br />starting point</h3><p>Create an account and subscribe to the single website plan.</p></article>
-          <article className="product-card"><p className="card-kicker">Shape the site</p><h3>Put your brand<br />at the centre</h3><p>Set up the essentials that make the website unmistakably yours.</p></article>
-          <article className="product-card"><p className="card-kicker">Publish</p><h3>Give people<br />a way in</h3><p>Share a focused website that represents your business directly.</p></article>
-          <article className="product-card spotlight-orange"><p className="card-kicker">Manage</p><h3>Keep your home<br />up to date</h3><p>Use one seller account to manage the subscription and your website.</p></article>
+      <section className={`${sectionClass} border-t border-border py-24 sm:py-36`} id="how-it-works" aria-labelledby="steps-title">
+        <div className="mb-12 grid gap-5 md:mb-16 md:grid-cols-2"><p className={eyebrowClass}>From plan to presence</p><h2 id="steps-title" className="text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-6xl">A short path to<br />your own corner<br />of the web.</h2></div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {[
+            ["Choose the plan", "One clear\nstarting point", "Create an account and subscribe to the single website plan.", "bg-[image:var(--gradient-violet)] text-[#1d1028]"],
+            ["Shape the site", "Put your brand\nat the centre", "Set up the essentials that make the website unmistakably yours.", "bg-card"],
+            ["Publish", "Give people\na way in", "Share a focused website that represents your business directly.", "bg-card"],
+            ["Manage", "Keep your home\nup to date", "Use one seller account to manage the subscription and your website.", "bg-[image:var(--gradient-orange)] text-[#32130e]"],
+          ].map(([kicker, title, description, theme]) => (
+            <Card className={`min-h-72 gap-0 border-0 py-0 ring-1 ring-foreground/10 ${theme}`} key={kicker}>
+              <CardContent className="flex h-full min-h-72 flex-col p-7 sm:p-9"><p className="text-xs font-semibold tracking-[0.08em] uppercase opacity-70">{kicker}</p><h3 className="mt-auto whitespace-pre-line text-3xl font-semibold leading-[0.95] tracking-[-0.06em]">{title}</h3><p className="mt-4 max-w-sm text-sm leading-relaxed opacity-75">{description}</p></CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
-      <section className="section pricing-section" id="pricing" aria-labelledby="pricing-title">
-        <div className="pricing-intro"><p className="eyebrow">One plan. No role selection.</p><h2 id="pricing-title">Everything starts<br />with your website.</h2><p>There is no buyer side, marketplace catalogue, or separate seller tier. You subscribe as the business owner.</p></div>
-        <article className="pricing-card"><p className="card-kicker">Branded website plan</p><p className="price"><span>THB 149</span> / month</p><ul><li>One branded business website</li><li>One seller account to manage it</li><li>Plan and website setup flow</li><li>Direct, focused public presence</li></ul><Link className="button button-primary" href="/auth">Get your website</Link></article>
+      <section className={`${sectionClass} grid gap-10 border-t border-border py-24 sm:py-36 lg:grid-cols-[1fr_minmax(20rem,0.8fr)] lg:gap-20`} id="pricing" aria-labelledby="pricing-title">
+        <div><p className={eyebrowClass}>One plan. No role selection.</p><h2 id="pricing-title" className="mt-5 text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-6xl">Everything starts<br />with your website.</h2><p className="mt-7 max-w-lg text-base leading-relaxed text-muted-foreground">There is no buyer side, marketplace catalogue, or separate seller tier. You subscribe as the business owner.</p></div>
+        <Card className="gap-0 border-0 bg-card py-0 ring-1 ring-foreground/10"><CardContent className="p-7 sm:p-9"><p className={eyebrowClass}>Branded website plan</p><p className="mt-10 text-sm text-muted-foreground"><span className="text-4xl font-semibold tracking-[-0.06em] text-foreground">THB 149</span> / month</p><ul className="mt-10 space-y-3 border-y border-border py-6 text-sm text-muted-foreground"><li>One branded business website</li><li>One seller account to manage it</li><li>Plan and website setup flow</li><li>Direct, focused public presence</li></ul><Link className={buttonVariants({ size: "lg", className: "mt-8 h-11 w-full rounded-full" })} href="/auth">Get your website</Link></CardContent></Card>
       </section>
 
-      <section className="section faq-section" id="faq" aria-labelledby="faq-title">
-        <div className="section-heading compact-heading"><p className="eyebrow">Frequently asked questions</p><h2 id="faq-title">A simple product<br />should have<br />straight answers.</h2></div>
-        <div className="faq-list">{faqs.map((faq) => <details key={faq.question} className="faq-row"><summary>{faq.question}</summary><p>{faq.answer}</p></details>)}</div>
+      <section className={`${sectionClass} border-t border-border py-24 sm:py-36`} id="faq" aria-labelledby="faq-title">
+        <div className="mb-12 grid gap-5 md:mb-16 md:grid-cols-2"><p className={eyebrowClass}>Frequently asked questions</p><h2 id="faq-title" className="text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-6xl">A simple product<br />should have<br />straight answers.</h2></div>
+        <Accordion className="border-t border-border" multiple>
+          {faqs.map((faq) => <AccordionItem value={faq.question} key={faq.question} className="border-border"><AccordionTrigger className="min-h-16 py-5 text-base hover:no-underline">{faq.question}</AccordionTrigger><AccordionContent className="max-w-2xl pb-6 leading-relaxed text-muted-foreground">{faq.answer}</AccordionContent></AccordionItem>)}
+        </Accordion>
       </section>
 
-      <section className="closing-cta" aria-labelledby="closing-title"><p className="eyebrow">Your next address online</p><h2 id="closing-title">Build the website<br />your brand needs.</h2><Link className="button button-primary" href="/auth">Choose your plan</Link></section>
+      <section className="border-y border-border bg-card px-5 py-24 text-center sm:px-10 sm:py-36" aria-labelledby="closing-title"><p className={eyebrowClass}>Your next address online</p><h2 id="closing-title" className="mx-auto mt-5 max-w-3xl text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-6xl">Build the website<br />your brand needs.</h2><Link className={buttonVariants({ size: "lg", className: "mt-8 h-11 rounded-full px-6" })} href="/auth">Choose your plan</Link></section>
 
-      <footer className="site-footer"><Link className="brand" href="#top">TSKC</Link><p>Branded websites for independent businesses.</p><nav aria-label="Footer navigation"><a href="#website">Website</a><a href="#pricing">Plan</a><Link href="/auth">Sign in</Link></nav></footer>
+      <footer className={`${sectionClass} flex flex-col gap-5 py-10 sm:flex-row sm:items-center sm:justify-between`}><Link className="w-max font-['Arial_Narrow','Helvetica_Neue',Arial,sans-serif] text-xl font-bold tracking-[-1px]" href="#top">TSKC</Link><nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-muted-foreground" aria-label="Footer navigation"><a className="hover:text-ring" href="#website">Website</a><a className="hover:text-ring" href="#pricing">Plan</a><Link className="hover:text-ring" href="/auth">Sign in</Link></nav></footer>
     </main>
   );
 }

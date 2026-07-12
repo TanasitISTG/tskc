@@ -32,7 +32,7 @@ TSKC is not a marketplace, a multi-vendor commerce platform, or a buyer-wallet p
 | API | tRPC | Typed server procedures. Protected procedures resolve the session on every request. |
 | Email | Resend | Password-reset links only. |
 | Hosting | Vercel | Next.js deployment and future branded-site host resolution. |
-| UI | Astryx + Tailwind | Accessible dark-canvas interface following `DESIGN.md`. |
+| UI | shadcn/ui Base UI + Tailwind CSS v4 | Owned accessible components and dark-canvas interface following `DESIGN.md`. |
 | Tooling | Bun, TypeScript, Vitest, ESLint | Runtime, package manager, tests, and quality checks. |
 
 ## Security and Operational Rules

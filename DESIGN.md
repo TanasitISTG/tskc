@@ -26,14 +26,16 @@ TSKC sells one branded-website subscription to independent businesses. The inter
 
 ## Components
 
+The owned component layer is shadcn/ui using Base UI primitives and Tailwind CSS v4. It is dark-only: semantic shadcn tokens map directly to the palette above and there is no theme toggle.
+
 ### Navigation
 
-The header keeps the TSKC wordmark, a small set of product anchors, a sign-in action, and a single white pill primary action. It collapses to a native disclosure menu on small screens.
+The header keeps the TSKC wordmark, a small set of product anchors, a sign-in action, and a single white pill primary action. It collapses to a shadcn Sheet menu on small screens.
 
 ### Buttons
 
 - Primary: white text-on-dark inversion, 44px minimum height, full pill.
-- Secondary: `--surface-1` pill, same minimum height.
+- Secondary: `--surface-1` pill, same minimum height. Outline treatments are reserved for supporting actions and social sign-in.
 - Do not add bordered ghost buttons or blue primary buttons.
 
 ### Account panel
