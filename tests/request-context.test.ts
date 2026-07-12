@@ -1,0 +1,77 @@
+import { drizzle } from "drizzle-orm/pg-proxy";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import * as schema from "@/db/schema";
+import { resolveRequestTenant } from "@/server/request-context";
+
+describe("resolveRequestTenant", () => {
+  const queries: string[] = [];
+  const database = drizzle(
+    async (sql, params) => {
+      queries.push(sql);
+
+      if (params.includes("my-shop")) {
+        return {
+          rows: [["shop-a", "my-shop", new Date("2026-01-01"), new Date("2026-01-01")]],
+        };
+      }
+
+      return { rows: [] };
+    },
+    { schema },
+  );
+
+  beforeEach(() => queries.splice(0));
+
+  it("returns platform context without touching the database", async () => {
+    await expect(
+      resolveRequestTenant(
+        new Headers({ host: "tskc.example", "x-forwarded-host": "my-shop.tskc.example" }),
+        "tskc.example",
+        database,
+      ),
+    ).resolves.toEqual({ kind: "platform" });
+
+    expect(queries).toHaveLength(0);
+  });
+
+  it("resolves a known seller host and loads its shop", async () => {
+    await expect(
+      resolveRequestTenant(new Headers({ host: "my-shop.tskc.example" }), "tskc.example", database),
+    ).resolves.toMatchObject({
+      kind: "storefront",
+      subdomain: "my-shop",
+      shop: { id: "shop-a", subdomain: "my-shop" },
+    });
+
+    expect(queries).toHaveLength(1);
+  });
+
+  it("returns unknown for an unclaimed seller host", async () => {
+    await expect(
+      resolveRequestTenant(
+        new Headers({ host: "unclaimed.tskc.example" }),
+        "tskc.example",
+        database,
+      ),
+    ).resolves.toEqual({ kind: "unknown" });
+  });
+
+  it("ignores forwarded hosts and rejects malformed hosts", async () => {
+    await expect(
+      resolveRequestTenant(
+        new Headers({ host: "tskc.example", "x-forwarded-host": "my-shop.tskc.example" }),
+        "tskc.example",
+        database,
+      ),
+    ).resolves.toEqual({ kind: "platform" });
+
+    await expect(
+      resolveRequestTenant(
+        new Headers({ host: "my-shop.tskc.example, attacker.example" }),
+        "tskc.example",
+        database,
+      ),
+    ).resolves.toEqual({ kind: "unknown" });
+  });
+});

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -9,6 +11,8 @@ import {
 } from "@/components/ui/accordion";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { parseServerEnv } from "@/lib/env";
+import { resolveRequestTenant } from "@/server/request-context";
 
 const faqs = [
   {
@@ -32,7 +36,36 @@ const sectionClass =
   "mx-auto w-[min(1200px,calc(100%-40px))] md:w-[min(1200px,calc(100%-clamp(40px,8vw,96px)))]";
 const eyebrowClass = "text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase";
 
-export default function Home() {
+function StorefrontPlaceholder() {
+  return (
+    <main className="grid min-h-screen place-items-center px-6 py-24">
+      <div className="w-full max-w-xl text-center">
+        <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+          TSKC storefront
+        </p>
+        <h1 className="mt-4 text-5xl font-semibold tracking-[-0.06em]">Storefront coming soon.</h1>
+        <p className="mt-5 text-base leading-relaxed text-muted-foreground">
+          This seller&apos;s website is being prepared.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+export default async function Home() {
+  const tenant = await resolveRequestTenant(
+    await headers(),
+    parseServerEnv(process.env).platformDomain,
+  );
+
+  if (tenant.kind === "unknown") {
+    notFound();
+  }
+
+  if (tenant.kind === "storefront") {
+    return <StorefrontPlaceholder />;
+  }
+
   return (
     <main className="overflow-clip">
       <SiteHeader />
@@ -52,8 +85,8 @@ export default function Home() {
         </h1>
         <div className="mt-12 grid gap-8 border-t border-border pt-7 md:mt-20 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16">
           <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            One simple plan: a branded website that gives your business a clear,
-            professional place to live online.
+            One simple plan: a branded website that gives your business a clear, professional place
+            to live online.
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
             <Link

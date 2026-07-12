@@ -22,11 +22,13 @@ export function normalizeSubdomain(value: string) {
 
 export function resolveHost(host: string | null, platformDomain: string): HostContext {
   const normalizedPlatformDomain = platformDomain.trim().toLowerCase();
-  const normalizedHost = host?.trim().toLowerCase();
+  const normalizedHost = host?.toLowerCase();
 
   if (
     normalizedHost === undefined ||
     normalizedHost === "" ||
+    normalizedHost !== normalizedHost.trim() ||
+    /\s/.test(normalizedHost) ||
     normalizedHost.includes(",") ||
     normalizedHost.includes("/") ||
     normalizedHost.includes("@")

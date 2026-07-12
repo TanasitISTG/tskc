@@ -8,7 +8,7 @@ import type { TablesRelationalConfig } from "drizzle-orm/relations";
 import { shop, shopMembership } from "@/db/schema";
 import { normalizeSubdomain } from "@/lib/tenancy";
 
-type Database<
+export type ShopDatabase<
   TQueryResult extends PgQueryResultHKT,
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig,
@@ -29,7 +29,7 @@ export async function findShopBySubdomain<
   TQueryResult extends PgQueryResultHKT,
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig,
->(database: Database<TQueryResult, TFullSchema, TSchema>, subdomain: string) {
+>(database: ShopDatabase<TQueryResult, TFullSchema, TSchema>, subdomain: string) {
   const [result] = await database
     .select()
     .from(shop)
@@ -43,7 +43,7 @@ export async function findOwnedShop<
   TQueryResult extends PgQueryResultHKT,
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig,
->(database: Database<TQueryResult, TFullSchema, TSchema>, shopId: string, userId: string) {
+>(database: ShopDatabase<TQueryResult, TFullSchema, TSchema>, shopId: string, userId: string) {
   const [result] = await database
     .select({ shop })
     .from(shop)
@@ -59,7 +59,7 @@ export async function updateOwnedShopSubdomain<
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig,
 >(
-  database: Database<TQueryResult, TFullSchema, TSchema>,
+  database: ShopDatabase<TQueryResult, TFullSchema, TSchema>,
   shopId: string,
   userId: string,
   subdomain: string,

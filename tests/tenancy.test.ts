@@ -44,6 +44,8 @@ describe("resolveHost", () => {
       "a.b.tskc.example",
       "shop.example",
       "shop.tskc.example, attacker.example",
+      " shop.tskc.example",
+      "shop.tskc.example ",
     ]) {
       expect(resolveHost(host, platformDomain)).toEqual({ kind: "unknown" });
     }
