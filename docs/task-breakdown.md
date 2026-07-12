@@ -6,7 +6,7 @@ TSKC sells one monthly branded-website plan to one account type: the seller / we
 
 1. A visitor opens the platform landing page.
 2. The visitor creates an account or signs in.
-3. The seller chooses the single plan and completes checkout.
+3. The seller chooses the single Stripe plan and pays by credit/debit card or PromptPay through a participating Thai bank app.
 4. A verified payment event activates the seller's subscription.
 5. The seller sets the website identity and essential public information.
 6. The seller publishes the website.
@@ -30,7 +30,7 @@ Reviewed 2026-07-12 against the code graph, source files, tests, migrations, and
 
 Every task must meet these rules:
 
-- [ ] The implementation stays within `docs/specs/digital-storefront-saas.md`, `docs/project-overview.en.md`, `DESIGN.md`, and `docs/decisions/001-seller-only-branded-website-product.md`.
+- [ ] The implementation stays within `docs/specs/digital-storefront-saas.md`, `docs/project-overview.en.md`, `DESIGN.md`, `docs/decisions/001-seller-only-branded-website-product.md`, and `docs/decisions/002-stripe-billing-provider.md`.
 - [ ] The application has one seller identity. No role picker, buyer identity, marketplace model, or platform-owner self-selection is introduced.
 - [ ] Protected procedures resolve the session on the server and derive ownership from `session.user.id`; the client never supplies the authority for an owner check.
 - [ ] Website setup, editing, and publication require an active subscription according to the final grace/suspension policy.
@@ -132,29 +132,31 @@ Every task must meet these rules:
 - [ ] No user-facing page introduces a second account type or marketplace flow.
 - [ ] `bun run fmt:check`, `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build` pass.
 
-## Task 4: Payment-provider decision and billing boundary
+## Task 4: Stripe payment-provider decision and billing boundary
 
-**Status:** Not started; intentionally blocked until the business selects and approves a provider.
+**Status:** Stripe is selected and the billing boundary is documented; checkout, callbacks, and sandbox verification remain.
 
-**Description:** Decide the provider and write the billing contract before implementing checkout or callbacks. The decision must cover the single THB 149/month plan, currency representation, provider IDs, checkout return paths, verified events, idempotency, cancellation, grace period, suspension, retries, and reconciliation. Do not implement billing on the assumption that the existing `SLIP2GO_*` configuration is the chosen provider.
+**Description:** Implement the accepted Stripe billing boundary before checkout or callbacks. The contract covers the single THB 149/month plan, integer currency representation, Stripe Product/Price IDs, credit/debit cards, PromptPay QR through Thai mobile banking apps, card auto-renewal, PromptPay invoice collection, safe return paths, verified events, idempotency, cancellation, grace period, suspension, retries, and reconciliation. Do not add top-up, receipt verification, or balance features to the seller-facing website.
 
 **Dependencies:** Task 1 and Task 3.
 
-**Files likely touched:** A new billing decision document under `docs/decisions/`, `src/lib/env.ts`, `.env.example`, billing contract/types, and provider contract tests.
+**Files likely touched:** `docs/decisions/002-stripe-billing-provider.md`, `src/lib/env.ts`, `.env.example`, billing contract/types, and provider contract tests.
 
 **Acceptance criteria:**
 
-- [ ] A provider is selected and its sandbox/API/webhook capabilities are documented in an approved decision record.
+- [x] Stripe is selected and its sandbox/API/webhook capabilities are documented in approved `docs/decisions/002-stripe-billing-provider.md`.
+- [x] Required payment options are recorded as credit/debit cards plus PromptPay, with mobile banking defined as the participating Thai bank-app QR flow.
 - [ ] The plan has one stable internal identifier, a provider price/product identifier, and an integer minor-unit amount (`THB 14900` if the provider uses satang).
-- [ ] The checkout contract defines authenticated entry, success/cancel return paths, duplicate checkout behavior, and what happens when a payment is abandoned.
+- [ ] The checkout contract defines authenticated entry, Stripe card subscription and PromptPay invoice paths, success/cancel return paths, duplicate checkout behavior, and what happens when a payment is abandoned.
 - [ ] The callback contract accepts only provider-verified signatures/events, records provider event IDs, is idempotent, and safely handles retries and out-of-order delivery.
-- [ ] The contract defines active, past-due, canceled, grace-period, and suspended behavior before Task 5 starts.
+- [ ] The contract defines active, past-due, canceled, grace-period, and suspended behavior for both automatic card renewal and PromptPay invoice payment before Task 5 starts.
 - [ ] Provider secrets stay server-only and no client-controlled amount, plan, seller ID, or subscription status is trusted.
 - [ ] Invalid, replayed, and malformed provider events have no unauthorized subscription side effect.
+- [x] The seller-facing website remains a branded-site template boundary and does not add top-up, receipt verification, balances, wallets, products, carts, payouts, or buyer accounts.
 
 **Verification:**
 
-- [ ] Review the provider decision and callback threat model before implementation.
+- [x] Review the accepted Stripe provider decision, payment-method constraints, and callback threat model before implementation.
 - [ ] Exercise provider sandbox checkout and signed/invalid/replayed webhook fixtures.
 - [ ] Confirm the chosen environment variables are complete in `.env.example` and production startup validation.
 
@@ -166,6 +168,8 @@ Every task must meet these rules:
 
 **Description:** Persist the seller's single subscription and make subscription state the server-side gate for website setup, editing, and publication. The seller must be able to see the current plan state and recover from checkout failures without receiving false access.
 
+**Collection policy:** Card subscriptions use automatic recurring collection. PromptPay/mobile-banking subscriptions use Stripe's `send_invoice` collection path; access is granted only after a verified paid invoice event, and due/grace/past-due states are explicit.
+
 **Dependencies:** Task 4.
 
 **Files likely touched:** `src/db/schema.ts`, a migration, `src/server/subscriptions.ts`, `src/server/trpc.ts`, seller account/plan UI routes, and subscription tests.
@@ -175,6 +179,7 @@ Every task must meet these rules:
 - [ ] The database enforces at most one v1 subscription per seller and stores the provider customer/subscription identifiers, internal plan, status, billing period, cancellation state, and last verified event metadata needed for reconciliation.
 - [ ] Only a verified provider event can activate or suspend a subscription; a browser success redirect alone cannot grant access.
 - [ ] A seller can start checkout only when authenticated and can view a consistent pending/active/past-due/canceled/suspended state.
+- [ ] Card renewals and PromptPay/mobile-banking invoice payments feed the same server-side subscription state machine without granting access from a browser success redirect.
 - [ ] Website setup, editing, and publication reject inactive sellers server-side with a stable error and an actionable plan link.
 - [ ] The approved grace-period policy is applied consistently to management access and public publication.
 - [ ] Duplicate, delayed, and out-of-order events do not create duplicate subscriptions or move state backward incorrectly.
@@ -185,6 +190,7 @@ Every task must meet these rules:
 
 - [ ] Add unit/integration tests for state transitions, idempotency, ownership, and inactive-access rejection.
 - [ ] Run a provider sandbox checkout for a new seller and verify the database transition only after the signed event is accepted.
+- [ ] Exercise both a card auto-renewal fixture and a PromptPay/mobile-banking invoice fixture, including unpaid, paid, past-due, grace, and recovery transitions.
 - [ ] Test cancellation, grace-period expiry, suspension, and recovery using provider fixtures or a test clock.
 
 **Estimated scope:** Large; split schema, server procedures, and UI into separate implementation increments if more than five files are needed.
@@ -301,7 +307,7 @@ Every task must meet these rules:
 **Acceptance criteria:**
 
 - [ ] `bun run fmt:check`, `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build` pass with no unresolved warnings or debug logging.
-- [ ] Production has the approved `PLATFORM_DOMAIN`, database, Better Auth, OAuth, Resend, and payment-provider configuration; optional storage is configured only if used.
+- [ ] Production has the approved `PLATFORM_DOMAIN`, database, Better Auth, OAuth, Resend, and Stripe configuration (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, and enabled card/PromptPay methods); optional storage is configured only if used.
 - [ ] Database migrations are reviewed, applied in order, backed up where required, and safe for the actual deployment history.
 - [ ] Health/readiness checks cover application boot, database connectivity, auth configuration, and the selected payment integration without exposing secrets.
 - [ ] Monitoring captures auth failures, checkout failures, callback verification failures, subscription transitions, publication failures, host-resolution failures, and server errors.
@@ -325,24 +331,24 @@ Do not mark v1 complete until every item below passes in a production-like envir
 - [ ] **Landing:** A visitor at the platform host sees one branded-website plan and can reach `/auth`.
 - [ ] **Account:** The visitor creates a seller account or signs in with username/password, Google, or Discord without selecting a role.
 - [ ] **Continuation:** Successful auth lands on the first incomplete protected step; malicious or external `next` values cannot redirect out of the application.
-- [ ] **Checkout:** The authenticated seller starts checkout for the one plan; amount and plan are server-controlled.
+- [ ] **Checkout:** The authenticated seller starts the one Stripe plan using credit/debit card auto-renewal or PromptPay/mobile-banking invoice payment; amount, plan, collection method, and seller are server-controlled.
 - [ ] **Activation:** The subscription becomes active only after a valid, verified, idempotently processed provider event.
 - [ ] **Onboarding:** The active seller saves one normalized website identity and approved public content with server-side validation.
 - [ ] **Publication:** The seller explicitly publishes; draft content remains private until then.
 - [ ] **Public site:** The assigned seller host renders only the published website; the platform host still renders the landing page.
 - [ ] **Management:** The seller can return, edit, preview, publish/unpublish, and sign out from the protected workspace.
-- [ ] **Lifecycle:** Cancellation, grace-period expiry, suspension, and recovery match the approved billing policy for both management and public visibility.
+- [ ] **Lifecycle:** Card renewal and PromptPay invoice payment, cancellation, grace-period expiry, suspension, and recovery match the approved billing policy for both management and public visibility.
+- [ ] **Template boundary:** The seller-facing website remains a branded website; top-up, receipt verification, balance/wallet ledger, products, carts, payouts, and buyer accounts are absent.
 - [ ] **Isolation:** Seller A cannot read or mutate Seller B's plan, website, assets, drafts, or published output.
 - [ ] **Operations:** Health checks, logs, error reporting, payment-event auditability, monitoring, and rollback are ready before announcing launch.
 
 ## Open decisions required before implementation reaches the dependent task
 
-- Payment provider and the exact checkout/callback contract.
-- Cancellation, grace-period, past-due, suspension, and public-site visibility policy.
+- Exact Stripe Product/Price IDs, invoice due date, cancellation policy, grace period, past-due/suspension behavior, and public-site visibility policy.
 - Whether the current one-to-one `shop_membership` ownership table remains or is replaced by a direct seller/website owner relation.
 - Platform subdomain rules, reserved labels, and the future custom-domain boundary.
 - Exact v1 website content fields and whether R2 is required for brand assets.
 
 ## Deliberately excluded from v1
 
-Buyer identities, application roles, marketplace search, products, carts, receipt upload, wallets, payouts, fulfilment, file delivery, multiple sites per seller, custom domains, website templates, team access, and platform-owner UI.
+Buyer identities, application roles, marketplace search, products, carts, top-up, receipt upload/verification, balances, wallets, payouts, fulfilment, file delivery, multiple sites per seller, custom domains, website templates, team access, and platform-owner UI.

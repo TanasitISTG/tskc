@@ -39,4 +39,4 @@ The existing initial Better Auth migration is re-baselined before deployment to 
 - Protected procedures authenticate a seller session but do not perform role checks.
 - Website ownership will be checked against the session user ID when website data is introduced.
 - Documentation, landing copy, and account UI describe a direct branded-site subscription.
-- Payment-provider selection remains a required decision before billing implementation.
+- Stripe is the accepted v1 payment provider; ADR-002 defines the billing boundary and payment-method constraints before implementation.

@@ -21,8 +21,8 @@ TSKC gives an independent business a direct, branded web presence through one mo
 
 ## Explicit Non-goals for v1
 
-- Buyer accounts, application roles, marketplace discovery, carts, checkout, receipt uploads, wallets, payouts, order history, or digital-product delivery.
-- Multiple websites per seller, custom domains, website templates, and payment-provider implementation before the provider decision.
+- Buyer accounts, application roles, marketplace discovery, carts, buyer checkout, receipt uploads, receipt verification, top-ups, balances, wallets, payouts, order history, or digital-product delivery.
+- Multiple websites per seller, custom domains, website templates, and seller-site commerce features beyond the accepted Stripe subscription boundary.
 - Platform-owner UI, team accounts, and delegated access.
 
 ## Product Rules
@@ -43,8 +43,11 @@ TSKC gives an independent business a direct, branded web presence through one mo
 
 ### Payment boundary
 
-- The payment provider has not been selected. No billing credentials, receipt validator, or money-movement code may be added on assumption.
-- When a provider is selected, checkout/callbacks must use provider-verified events, idempotency keys, integer minor currency units, and an approved security review.
+- Stripe is the accepted v1 provider for the one THB 149/month plan; the internal plan ID is `branded_website_monthly` and the provider amount is integer minor units (`14900` satang).
+- Required payment options are credit/debit cards and PromptPay. Mobile banking means completing the PromptPay QR flow in a participating Thai bank app; no separate unsupported payment rail is assumed.
+- Cards use automatic recurring collection. PromptPay/mobile-banking uses Stripe's invoice-based `send_invoice` path and must be modeled as monthly invoice payment, not automatic debit.
+- Checkout and callbacks must use provider-verified events, idempotency keys, safe same-origin return paths, server-controlled amount/plan/seller values, and an approved security review.
+- The seller website remains a branded-site template boundary: no top-up, receipt verification, balance/wallet ledger, products, carts, payouts, or buyer-account flow is added in v1.
 
 ## Technical Boundaries
 
@@ -61,9 +64,11 @@ TSKC gives an independent business a direct, branded web presence through one mo
 3. An unauthenticated protected procedure is rejected, while an authenticated seller procedure receives only that seller's identity.
 4. The public landing page clearly sells a branded website plan, not marketplace commerce.
 5. The plan, onboarding, website, and publication work can be added without reintroducing buyer identities or marketplace data.
+6. A seller can choose Stripe card or PromptPay/mobile-banking payment, and subscription access changes only after a verified Stripe event.
+7. The seller-facing website does not add top-up, receipt verification, balance/wallet, or buyer-commerce features.
 
 ## Open Decisions
 
-- Payment provider, checkout experience, cancellation policy, and subscription grace period.
+- Stripe checkout/invoice experience, cancellation policy, invoice due date, and subscription grace period.
 - Branded-site hostname/subdomain policy and custom-domain roadmap.
 - The exact website content model and editing experience.
