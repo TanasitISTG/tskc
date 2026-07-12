@@ -1,54 +1,346 @@
 # TSKC v1 Task Breakdown
 
+## Product contract
+
+TSKC sells one monthly branded-website plan to one account type: the seller / website owner. The v1 business flow is:
+
+1. A visitor opens the platform landing page.
+2. The visitor creates an account or signs in.
+3. The seller chooses the single plan and completes checkout.
+4. A verified payment event activates the seller's subscription.
+5. The seller sets the website identity and essential public information.
+6. The seller publishes the website.
+7. A public visitor opens the seller's assigned host and sees published content.
+8. The seller returns to the protected workspace to maintain the website while the plan is active.
+9. Cancellation, grace-period, suspension, and unpublished states are handled explicitly.
+
+Every task below must move this path forward. A task is not complete merely because its isolated UI or database code exists.
+
+## Current implementation snapshot
+
+Reviewed 2026-07-12 against the code graph, source files, tests, migrations, and all repository Markdown documents.
+
+- Present: the dark landing page at `/`, the account flow at `/auth`, the branded auth error page, the Better Auth API route, server-side session context, host/subdomain validation, and shop ownership helpers.
+- Present: focused Vitest coverage for auth helpers, environment validation, request tenancy, Resend reset behavior, shop ownership, schema constraints, and tRPC auth guards.
+- Missing: plan selection, checkout, subscription persistence and gating, seller onboarding, protected website management, published website rendering, and a production launch path.
+- The current build exposes `/`, `/auth`, `/auth/error`, and `/api/auth/[...all]`; there is no completed seller workspace or public branded-site route yet.
+- Baseline checks currently pass: `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build`.
+
 ## Definition of done
 
-Every task includes accessible UI, server-side ownership checks, focused tests, and `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build` where applicable. Product work must remain within the seller-only branded-website model in `docs/specs/digital-storefront-saas.md`.
+Every task must meet these rules:
 
-## Task 1: Application foundation
+- [ ] The implementation stays within `docs/specs/digital-storefront-saas.md`, `docs/project-overview.en.md`, `DESIGN.md`, and `docs/decisions/001-seller-only-branded-website-product.md`.
+- [ ] The application has one seller identity. No role picker, buyer identity, marketplace model, or platform-owner self-selection is introduced.
+- [ ] Protected procedures resolve the session on the server and derive ownership from `session.user.id`; the client never supplies the authority for an owner check.
+- [ ] Website setup, editing, and publication require an active subscription according to the final grace/suspension policy.
+- [ ] User input is validated at the server boundary. Public rendering exposes only approved published fields and safe asset/URL values.
+- [ ] UI work keeps visible labels, semantic headings, keyboard access, 44px controls, visible focus, WCAG AA contrast, reduced-motion behavior, and no horizontal overflow at 320px.
+- [ ] Each new branch, parser, mutation, payment event, or security boundary has focused Vitest coverage. Use the existing Vitest setup before adding a new test framework.
+- [ ] Before launch, all of `bun run fmt:check`, `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build` pass.
+- [ ] Any migration, provider callback, or launch change has a manual verification step and a documented rollback or recovery path.
 
-Maintain the Next.js, Bun, TypeScript, Drizzle, Vitest, and dark design-system baseline.
+## Task 1: Foundation, canonical ownership, and migration safety
 
-## Task 2: Public landing page
+**Status:** The Next.js/Bun/TypeScript/Drizzle/Vitest baseline exists. The v1 domain model and migration plan still need to be made explicit.
 
-Present the single THB 149 monthly branded-website plan. Explain the direct website value, the short setup path, and clear account calls to action. Do not show products, buyers, storefront checkout, wallets, or receipt payment.
+**Description:** Keep the existing stack and establish the smallest schema that supports one seller, one website, one plan, and one subscription. Reconcile the current `shop` / `shop_membership` code with ADR-001 before adding more domain data. The ownership table may remain only if it represents one-to-one website ownership rather than application roles; otherwise replace it with a direct owner relation. Do not carry a generic role model into v1.
 
-## Task 3: Seller accounts and sessions
+**Dependencies:** None.
 
-Implement Better Auth username/password registration plus Google and Discord OAuth; secure sessions; sign-out; and Resend password reset.
+**Files likely touched:** `src/db/schema.ts`, `src/server/shops.ts`, `src/lib/env.ts`, `.env.example`, `drizzle/*.sql`, `drizzle/meta/*`, and focused schema/environment tests.
 
-**Acceptance criteria**
+**Acceptance criteria:**
 
-- [x] Every authenticated user is a seller account; no buyer/seller role is persisted or selected.
-- [x] Username/password accounts can request a generic-success password reset, while synthetic OAuth placeholder emails never receive mail.
-- [x] Server procedures reject missing sessions; safe return paths reject external and protocol-relative destinations.
-- [x] The responsive account panel uses the dark design tokens and has no marketplace or buyer flow.
-- [x] Keep account linking explicit: never link users by display name or username. A signed-in user can connect Google or Discord from `/auth`, including providers with a different email; a social-only user can add password login through the password-reset flow.
-- [x] Replace `account_not_linked` with recovery guidance: sign in using the existing method, then connect the provider from `/auth`.
-- [x] Replace Better Auth's default error screen with a branded, accessible error page. Translate known auth errors (including `account_not_linked`) into short next steps and retain a clear route back to sign-in.
+- [ ] The canonical v1 ownership model is written down: one authenticated seller owns at most one website and no application role is persisted or selected.
+- [ ] `shop` / `shop_membership` is either reduced to that ownership invariant or replaced; no unused role enum or application-role join table remains.
+- [ ] A fresh database can apply the complete migration sequence without manual edits.
+- [ ] A database that has already applied an old baseline uses a separately reviewed expand/contract migration; no applied migration is rewritten in place.
+- [ ] `.env.example` documents only agreed integrations. Current `SLIP2GO_*` variables are not treated as an accepted payment-provider decision.
+- [ ] Server-only secrets, OAuth credentials, payment credentials, and reset tokens cannot enter browser bundles or public website data.
 
-## Task 4: Subscription-plan decision and billing boundary
+**Verification:**
 
-Choose the payment provider and document the checkout, verified-callback, idempotency, cancellation, grace-period, and suspension rules before implementing billing code.
+- [ ] Run `bun run db:generate` and review the generated SQL and snapshot diff.
+- [ ] Apply migrations to a disposable PostgreSQL database, then run the schema and ownership tests.
+- [ ] Run `bun run fmt:check`, `bun run lint`, `bun run typecheck`, and `bun test`.
 
-## Task 5: Subscription lifecycle
+**Estimated scope:** Medium; larger only if an already-used migration requires expand/contract cleanup.
 
-Persist the seller's single-plan subscription and enforce its active/suspended state for website-management actions. Use provider-verified events only after Task 4's decision.
+## Task 2: Public product landing page
+
+**Status:** The page and visual direction exist; content-rule and CTA verification remain.
+
+**Description:** Make the platform host clearly sell one THB 149/month branded-website plan and lead visitors into the account flow. The page should describe the positive business outcome and the short setup path, not rejected marketplace concepts.
+
+**Dependencies:** Task 1 for the stable platform host and environment contract.
+
+**Files likely touched:** `src/app/page.tsx`, `src/components/site-header.tsx`, `src/app/globals.css`, and landing-page tests or manual smoke notes.
+
+**Acceptance criteria:**
+
+- [ ] The platform host renders the landing page; a seller host never renders the platform landing page.
+- [ ] The page presents exactly one branded-website plan at THB 149/month with one primary account CTA and a clear sign-in path.
+- [ ] CTA links enter `/auth` and preserve a safe internal continuation path for the first incomplete seller step.
+- [ ] Copy follows `DESIGN.md`: use seller, business owner, branded website, and plan language; remove rejected-commerce vocabulary from user-facing landing copy.
+- [ ] The page has the required responsive layout, accessible headings and landmarks, keyboard navigation, visible focus, and no horizontal overflow at 320px.
+- [ ] The pricing card, website preview, and feature tiles remain within the dark design tokens and component rules.
+
+**Verification:**
+
+- [ ] Run the landing page at the platform host in development and check desktop, 810px, and 320px widths.
+- [ ] Keyboard-tab through navigation, CTA links, FAQ controls, and the mobile menu.
+- [ ] Run `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build`.
+
+**Estimated scope:** Small.
+
+## Task 3: Seller accounts, sessions, and protected entry
+
+**Status:** Auth primitives are implemented and tested. The post-auth business destination and final runtime verification remain.
+
+**Description:** Finish the single-seller account flow using the existing Better Auth integration. Preserve explicit account linking, generic password-reset responses, synthetic OAuth handling, safe return paths, and server-side session ownership. After sign-in, send the seller to the first incomplete protected step rather than defaulting to the public landing page.
+
+**Dependencies:** Task 1; Task 2 for the public entry point.
+
+**Files likely touched:** `src/lib/auth.ts`, `src/lib/auth-client.ts`, `src/lib/auth-account.ts`, `src/lib/auth-guards.ts`, `src/server/auth-context.ts`, `src/server/trpc.ts`, `src/app/auth/page.tsx`, `src/app/auth/error/page.tsx`, `src/app/api/auth/[...all]/route.ts`, and existing auth tests.
+
+**Acceptance criteria:**
+
+- [ ] Username/password registration and sign-in create a seller account without a role selector or role record.
+- [ ] Google and Discord sign-in work when configured; a social identity without an email receives a synthetic placeholder address and never receives a reset email.
+- [ ] A signed-in seller can connect Google or Discord explicitly, including a provider with a different email; no implicit linking by username or display name occurs.
+- [ ] Password reset always returns generic-success copy, and the reset token flow handles missing, expired, invalid, and successful tokens without leaking account existence.
+- [ ] Sign-out revokes the session and returns to the platform landing page.
+- [ ] `next` accepts only a same-origin path beginning with exactly one `/`; invalid and protocol-relative values fall back safely.
+- [ ] The default authenticated continuation points to the first incomplete protected step (plan selection once billing exists), while an explicit valid `next` is preserved.
+- [ ] Protected tRPC/server procedures reject missing sessions and expose only the authenticated seller identity.
+- [ ] Known Better Auth errors, including `account_not_linked`, render branded recovery guidance with a clear route back to sign-in.
+
+**Verification:**
+
+- [ ] Keep the existing auth-account, auth-guards, Resend, environment, and tRPC tests green; add regression coverage for the post-auth continuation.
+- [ ] Manually test registration, sign-in, sign-out, password reset, Google/Discord callbacks, explicit provider linking, and an invalid `next` value.
+- [ ] Confirm production configuration fails closed when database, Better Auth, OAuth, or Resend settings are incomplete.
+
+**Estimated scope:** Medium.
+
+## Checkpoint A: Platform and identity
+
+- [ ] A new seller can open the platform landing page, create an account, sign in, and reach the protected product entry point.
+- [ ] An unauthenticated request cannot read or mutate protected seller data.
+- [ ] No user-facing page introduces a second account type or marketplace flow.
+- [ ] `bun run fmt:check`, `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build` pass.
+
+## Task 4: Payment-provider decision and billing boundary
+
+**Status:** Not started; intentionally blocked until the business selects and approves a provider.
+
+**Description:** Decide the provider and write the billing contract before implementing checkout or callbacks. The decision must cover the single THB 149/month plan, currency representation, provider IDs, checkout return paths, verified events, idempotency, cancellation, grace period, suspension, retries, and reconciliation. Do not implement billing on the assumption that the existing `SLIP2GO_*` configuration is the chosen provider.
+
+**Dependencies:** Task 1 and Task 3.
+
+**Files likely touched:** A new billing decision document under `docs/decisions/`, `src/lib/env.ts`, `.env.example`, billing contract/types, and provider contract tests.
+
+**Acceptance criteria:**
+
+- [ ] A provider is selected and its sandbox/API/webhook capabilities are documented in an approved decision record.
+- [ ] The plan has one stable internal identifier, a provider price/product identifier, and an integer minor-unit amount (`THB 14900` if the provider uses satang).
+- [ ] The checkout contract defines authenticated entry, success/cancel return paths, duplicate checkout behavior, and what happens when a payment is abandoned.
+- [ ] The callback contract accepts only provider-verified signatures/events, records provider event IDs, is idempotent, and safely handles retries and out-of-order delivery.
+- [ ] The contract defines active, past-due, canceled, grace-period, and suspended behavior before Task 5 starts.
+- [ ] Provider secrets stay server-only and no client-controlled amount, plan, seller ID, or subscription status is trusted.
+- [ ] Invalid, replayed, and malformed provider events have no unauthorized subscription side effect.
+
+**Verification:**
+
+- [ ] Review the provider decision and callback threat model before implementation.
+- [ ] Exercise provider sandbox checkout and signed/invalid/replayed webhook fixtures.
+- [ ] Confirm the chosen environment variables are complete in `.env.example` and production startup validation.
+
+**Estimated scope:** Small decision plus a medium contract/test slice.
+
+## Task 5: Subscription lifecycle and access gating
+
+**Status:** Not started.
+
+**Description:** Persist the seller's single subscription and make subscription state the server-side gate for website setup, editing, and publication. The seller must be able to see the current plan state and recover from checkout failures without receiving false access.
+
+**Dependencies:** Task 4.
+
+**Files likely touched:** `src/db/schema.ts`, a migration, `src/server/subscriptions.ts`, `src/server/trpc.ts`, seller account/plan UI routes, and subscription tests.
+
+**Acceptance criteria:**
+
+- [ ] The database enforces at most one v1 subscription per seller and stores the provider customer/subscription identifiers, internal plan, status, billing period, cancellation state, and last verified event metadata needed for reconciliation.
+- [ ] Only a verified provider event can activate or suspend a subscription; a browser success redirect alone cannot grant access.
+- [ ] A seller can start checkout only when authenticated and can view a consistent pending/active/past-due/canceled/suspended state.
+- [ ] Website setup, editing, and publication reject inactive sellers server-side with a stable error and an actionable plan link.
+- [ ] The approved grace-period policy is applied consistently to management access and public publication.
+- [ ] Duplicate, delayed, and out-of-order events do not create duplicate subscriptions or move state backward incorrectly.
+- [ ] Seller A cannot read or mutate Seller B's subscription by changing an ID in the request.
+- [ ] The UI has loading, failure, canceled-checkout, and unavailable-provider states with accessible status messages.
+
+**Verification:**
+
+- [ ] Add unit/integration tests for state transitions, idempotency, ownership, and inactive-access rejection.
+- [ ] Run a provider sandbox checkout for a new seller and verify the database transition only after the signed event is accepted.
+- [ ] Test cancellation, grace-period expiry, suspension, and recovery using provider fixtures or a test clock.
+
+**Estimated scope:** Large; split schema, server procedures, and UI into separate implementation increments if more than five files are needed.
+
+## Checkpoint B: Plan access
+
+- [ ] A new seller cannot enter website setup before verified subscription activation.
+- [ ] A verified active subscription unlocks the next protected step.
+- [ ] A canceled, suspended, or past-due subscription follows the approved policy and cannot bypass it through direct requests.
+- [ ] Replayed and invalid provider events are harmless and observable.
 
 ## Task 6: Seller onboarding and website identity
 
-Let an active subscriber establish one website identity: site address policy, business name, brand assets, and essential public information.
+**Status:** Not started. Existing subdomain normalization and host tests are reusable foundations.
 
-## Task 7: Public branded website
+**Description:** Give an active seller one protected setup flow for the website identity and essential public information. Finalize the smallest content model before coding; keep draft and published state separate so incomplete edits never leak to public visitors.
 
-Resolve and render a seller's active website safely, exposing only published public fields and clear unavailable/suspended states.
+**Dependencies:** Task 1 and Task 5.
 
-## Task 8: Website management
+**Files likely touched:** `src/db/schema.ts`, a migration, `src/lib/tenancy.ts`, `src/server/shops.ts` or its replacement, `src/server/websites.ts`, protected setup UI, and website/schema tests.
 
-Provide the seller's protected editing experience for the website's approved content model. Every mutation derives ownership from the server session.
+**Acceptance criteria:**
+
+- [ ] The data model enforces one website per seller and a unique normalized platform subdomain/host label.
+- [ ] The hostname policy defines reserved labels, allowed characters, length limits, case/whitespace normalization, and whether custom domains are out of scope.
+- [ ] The setup form captures only approved v1 fields: business identity, brand presentation, essential public description, contact information, and approved links/assets.
+- [ ] Every field is validated server-side with safe URL, length, format, and asset constraints; invalid input returns field-level errors without data loss.
+- [ ] Setup reads and mutations derive the seller from the session and require an active subscription.
+- [ ] Draft data is never returned by the public host resolver; publication is an explicit action with a visible success/failure state.
+- [ ] Asset handling uses the selected storage boundary (R2 only if approved), validates content type/size, and does not expose storage credentials.
+- [ ] The form is keyboard accessible, uses visible labels and associated errors, and works at mobile widths.
+
+**Verification:**
+
+- [ ] Test normalized/duplicate/reserved subdomains, invalid public fields, cross-seller access, inactive subscriptions, and draft isolation.
+- [ ] Manually create a website as Seller A, confirm Seller B cannot see or edit it, and confirm unpublished data is absent from the public host.
+- [ ] Run the database, server, and accessibility checks before moving to public rendering.
+
+**Estimated scope:** Large; keep the content model and asset path deliberately minimal.
+
+## Task 7: Public branded website and host resolution
+
+**Status:** Host resolution exists; public rendering is still a placeholder.
+
+**Description:** Replace `StorefrontPlaceholder` with a safe public website route. Preserve the existing platform-vs-seller host boundary and render only the seller's published public record. Unknown, malformed, unpublished, and suspended hosts need clear controlled behavior.
+
+**Dependencies:** Task 6.
+
+**Files likely touched:** `src/app/page.tsx`, `src/server/request-context.ts`, `src/server/shops.ts` or website queries, public website components/styles, and tenancy/request tests.
+
+**Acceptance criteria:**
+
+- [ ] The configured platform host renders the marketing landing page.
+- [ ] A known seller host resolves through the validated `Host` header path and renders only published fields for that seller.
+- [ ] Unknown, unrelated, nested, malformed, and reserved hosts do not resolve another seller and return the documented 404/unavailable state.
+- [ ] Forwarded or client-supplied host values are not trusted over the request host boundary already defined by the tenancy tests.
+- [ ] Unpublished and suspended sites follow the approved public behavior and never reveal drafts or private subscription data.
+- [ ] Public content is escaped/rendered safely, assets use approved URLs, and no account/session/payment data is exposed.
+- [ ] The public page has a stable responsive layout, semantic structure, accessible contrast/focus behavior, and no marketplace/storefront copy.
+
+**Verification:**
+
+- [ ] Add request-level tests for platform, known seller, unknown seller, malformed host, unpublished, and suspended states.
+- [ ] Run a local host-header smoke test and a production-like preview with a real published record.
+- [ ] Verify the public response does not contain draft fields, session tokens, provider IDs, or private contact data.
+
+**Estimated scope:** Medium.
+
+## Task 8: Protected website management
+
+**Status:** Not started.
+
+**Description:** Provide the seller workspace that connects plan status, onboarding, editing, preview, publication, and sign-out into one maintainable flow. Reuse the existing protected procedure and ownership patterns instead of adding client-side authorization checks.
+
+**Dependencies:** Task 5, Task 6, and Task 7.
+
+**Files likely touched:** Protected app routes/components, `src/server/trpc.ts`, `src/server/websites.ts`, subscription/account components, and management-flow tests.
+
+**Acceptance criteria:**
+
+- [ ] The protected entry route shows the seller's plan state and the correct next action: choose plan, finish setup, publish, or manage.
+- [ ] A seller can edit approved fields, preview the draft, publish, unpublish, and return to the public website without losing changes.
+- [ ] All reads and mutations use the authenticated session user ID; no request accepts a client-supplied owner as authority.
+- [ ] Inactive subscriptions cannot edit or publish, and the UI explains how to restore access.
+- [ ] Success, validation, conflict, network, and stale-data states are recoverable and accessible.
+- [ ] Sign-out works from the workspace and returns to the platform landing page.
+- [ ] The implementation does not add buyer accounts, multiple sites, templates, team access, or a platform-owner UI.
+
+**Verification:**
+
+- [ ] Run an end-to-end manual flow with two seller accounts: Seller A can manage only A, and Seller B can manage only B.
+- [ ] Confirm a publish change is visible on the correct public host and absent from every other host.
+- [ ] Test direct requests to each protected procedure with no session, the wrong seller ID, an inactive subscription, and valid active ownership.
+
+**Estimated scope:** Large; deliver as vertical increments for read, edit, publish, and subscription-state UX.
+
+## Checkpoint C: Complete product flow
+
+- [ ] A new seller can move from account creation through verified checkout, setup, publish, and public-site viewing without a manual database edit.
+- [ ] A returning seller lands in the correct next step and can maintain the site.
+- [ ] A second seller cannot access, mutate, or observe the first seller's subscription, draft, published content, assets, or host.
+- [ ] Unauthenticated, inactive, unpublished, unknown-host, and malformed-input paths are tested.
 
 ## Task 9: Production hardening and launch
 
-Add monitoring, subscription-event auditability, rate-limit verification, host-resolution tests, accessibility checks, deployment configuration, and release documentation.
+**Status:** Not started.
+
+**Description:** Prepare a reversible, observable launch. Cover application quality, security, accessibility, infrastructure, migration execution, monitoring, and the first-hour business-flow smoke test.
+
+**Dependencies:** Checkpoint C.
+
+**Files likely touched:** `.env.example`, `src/lib/env.ts`, health/error handling, monitoring hooks, deployment configuration, migration/release documentation, and launch tests/checklists.
+
+**Acceptance criteria:**
+
+- [ ] `bun run fmt:check`, `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build` pass with no unresolved warnings or debug logging.
+- [ ] Production has the approved `PLATFORM_DOMAIN`, database, Better Auth, OAuth, Resend, and payment-provider configuration; optional storage is configured only if used.
+- [ ] Database migrations are reviewed, applied in order, backed up where required, and safe for the actual deployment history.
+- [ ] Health/readiness checks cover application boot, database connectivity, auth configuration, and the selected payment integration without exposing secrets.
+- [ ] Monitoring captures auth failures, checkout failures, callback verification failures, subscription transitions, publication failures, host-resolution failures, and server errors.
+- [ ] Rate limits, session-cookie settings, CORS/origin rules, security headers, input validation, and secret handling are verified for production.
+- [ ] Keyboard, screen-reader, contrast, focus, reduced-motion, and mobile checks pass for landing, auth, plan, onboarding, management, and public-site pages.
+- [ ] A rollback plan exists for application deployment, subscription activation, publication, and database migration; the kill switch or provider disable path is known.
+- [ ] Staging smoke tests pass before production, and a named owner monitors the first hour after launch.
+
+**Verification:**
+
+- [ ] Deploy to staging and run the complete business flow with sandbox payment events and two seller accounts.
+- [ ] Deploy to production with the documented rollout/kill-switch plan, verify the health check, logs, error dashboard, and latency dashboard.
+- [ ] Manually repeat the critical seller flow in production, confirm logs are readable, and verify rollback readiness.
+
+**Estimated scope:** Medium/large launch slice; keep operational work separate from feature refactors.
+
+## Final launch gate: expected business flow
+
+Do not mark v1 complete until every item below passes in a production-like environment and the relevant evidence is recorded.
+
+- [ ] **Landing:** A visitor at the platform host sees one branded-website plan and can reach `/auth`.
+- [ ] **Account:** The visitor creates a seller account or signs in with username/password, Google, or Discord without selecting a role.
+- [ ] **Continuation:** Successful auth lands on the first incomplete protected step; malicious or external `next` values cannot redirect out of the application.
+- [ ] **Checkout:** The authenticated seller starts checkout for the one plan; amount and plan are server-controlled.
+- [ ] **Activation:** The subscription becomes active only after a valid, verified, idempotently processed provider event.
+- [ ] **Onboarding:** The active seller saves one normalized website identity and approved public content with server-side validation.
+- [ ] **Publication:** The seller explicitly publishes; draft content remains private until then.
+- [ ] **Public site:** The assigned seller host renders only the published website; the platform host still renders the landing page.
+- [ ] **Management:** The seller can return, edit, preview, publish/unpublish, and sign out from the protected workspace.
+- [ ] **Lifecycle:** Cancellation, grace-period expiry, suspension, and recovery match the approved billing policy for both management and public visibility.
+- [ ] **Isolation:** Seller A cannot read or mutate Seller B's plan, website, assets, drafts, or published output.
+- [ ] **Operations:** Health checks, logs, error reporting, payment-event auditability, monitoring, and rollback are ready before announcing launch.
+
+## Open decisions required before implementation reaches the dependent task
+
+- Payment provider and the exact checkout/callback contract.
+- Cancellation, grace-period, past-due, suspension, and public-site visibility policy.
+- Whether the current one-to-one `shop_membership` ownership table remains or is replaced by a direct seller/website owner relation.
+- Platform subdomain rules, reserved labels, and the future custom-domain boundary.
+- Exact v1 website content fields and whether R2 is required for brand assets.
 
 ## Deliberately excluded from v1
 
