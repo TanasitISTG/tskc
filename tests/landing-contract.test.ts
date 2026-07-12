@@ -57,4 +57,11 @@ describe("landing page contract", () => {
   it("sends social sign-in directly to the protected continuation", () => {
     expect(authSource).toContain("callbackURL: `${window.location.origin}${next}`");
   });
+
+  it("refreshes the shared session state after sign-out", () => {
+    expect(authSource).toContain(
+      "const { data: session, isPending: sessionPending, refetch } = authClient.useSession();",
+    );
+    expect(authSource).toContain("await refetch();");
+  });
 });

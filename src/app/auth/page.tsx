@@ -101,7 +101,7 @@ function AuthPanel() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const next = internalPath(searchParams.get("next"));
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { data: session, isPending: sessionPending, refetch } = authClient.useSession();
   const [mode, setMode] = useState<Mode>(
     token ? "reset" : searchParams.get("mode") === "forgot" ? "forgot" : "sign-in",
   );
@@ -273,6 +273,7 @@ function AuthPanel() {
         });
         return;
       }
+      await refetch();
       router.replace("/");
       router.refresh();
     } catch (error) {
