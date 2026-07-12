@@ -22,6 +22,9 @@ Implement Better Auth username/password registration plus Google and Discord OAu
 - [x] Username/password accounts can request a generic-success password reset, while synthetic OAuth placeholder emails never receive mail.
 - [x] Server procedures reject missing sessions; safe return paths reject external and protocol-relative destinations.
 - [x] The responsive account panel uses the dark design tokens and has no marketplace or buyer flow.
+- [x] Keep account linking explicit: never link users by display name or username. A signed-in user can connect Google or Discord from `/auth`, including providers with a different email; a social-only user can add password login through the password-reset flow.
+- [x] Replace `account_not_linked` with recovery guidance: sign in using the existing method, then connect the provider from `/auth`.
+- [x] Replace Better Auth's default error screen with a branded, accessible error page. Translate known auth errors (including `account_not_linked`) into short next steps and retain a clear route back to sign-in.
 
 ## Task 4: Subscription-plan decision and billing boundary
 

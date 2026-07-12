@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, Suspense, useState } from "react";
+import { type FormEvent, Suspense, useEffect, useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -12,10 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { hasProvider, isSyntheticEmail, type Provider } from "@/lib/auth-account";
 import { authClient } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up" | "forgot" | "reset";
-type Provider = "google" | "discord";
 type PendingAction = Mode | Provider | "sign-out";
 type Message = { text: string; tone: "error" | "success" };
 
@@ -107,7 +107,42 @@ function AuthPanel() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<Message | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [accounts, setAccounts] = useState<Array<{ providerId: string }>>([]);
+  const [accountsStatus, setAccountsStatus] = useState<"idle" | "loading" | "ready" | "error">(
+    "idle",
+  );
   const busy = pendingAction !== null;
+  const linked = searchParams.get("linked");
+  const linkedProvider: Provider | null =
+    linked === "google" || linked === "discord" ? linked : null;
+
+  useEffect(() => {
+    if (!session) {
+      setAccountsStatus("idle");
+      return;
+    }
+
+    let cancelled = false;
+    setAccountsStatus("loading");
+    void authClient
+      .listAccounts()
+      .then((result) => {
+        if (cancelled) return;
+        if (result.error || result.data === null) {
+          setAccountsStatus("error");
+          return;
+        }
+        setAccounts(result.data);
+        setAccountsStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setAccountsStatus("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   async function submitCredentials(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -155,6 +190,26 @@ function AuthPanel() {
         });
     } catch (error) {
       setMessage({ text: errorMessage(error), tone: "error" });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function linkProvider(provider: Provider) {
+    setPendingAction(provider);
+    setMessage(null);
+    try {
+      const result = await authClient.linkSocial({
+        provider,
+        callbackURL: `${window.location.origin}/auth?linked=${provider}`,
+      });
+      if (result.error)
+        setMessage({
+          text: "We could not connect this sign-in method. Try again.",
+          tone: "error",
+        });
+    } catch {
+      setMessage({ text: "We could not connect this sign-in method. Try again.", tone: "error" });
     } finally {
       setPendingAction(null);
     }
@@ -226,7 +281,7 @@ function AuthPanel() {
 
   if (sessionPending) return <main className="min-h-screen bg-background" aria-busy="true" />;
 
-  if (session) {
+  if (session && mode !== "forgot" && mode !== "reset") {
     return (
       <AuthFrame title="Your account is ready.">
         <p className="text-base leading-relaxed text-muted-foreground">
@@ -255,7 +310,92 @@ function AuthPanel() {
             )}
           </Button>
         </div>
+        <Separator className="my-7" />
+        <section aria-labelledby="sign-in-methods-title">
+          <h2 id="sign-in-methods-title" className="text-xl font-semibold tracking-[-0.03em]">
+            Sign-in methods
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Connect another method to sign in to this account.
+          </p>
+          {accountsStatus === "loading" && (
+            <p className="mt-5 text-sm text-muted-foreground" role="status">
+              Loading sign-in methods...
+            </p>
+          )}
+          {accountsStatus === "error" && (
+            <Alert variant="destructive" className="mt-5" role="alert">
+              <AlertDescription>
+                We could not load your sign-in methods. Refresh and try again.
+              </AlertDescription>
+            </Alert>
+          )}
+          {accountsStatus === "ready" && (
+            <div className="mt-5 grid gap-3">
+              {(["google", "discord"] as const).map((provider) => {
+                const connected = hasProvider(accounts, provider);
+                const providerName = provider[0].toUpperCase() + provider.slice(1);
+                return (
+                  <div
+                    className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3"
+                    key={provider}
+                  >
+                    <span className="font-medium">{providerName}</span>
+                    {connected ? (
+                      <span className="text-sm text-muted-foreground">Connected</span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => linkProvider(provider)}
+                      >
+                        {pendingAction === provider ? (
+                          <LoadingLabel>Connecting...</LoadingLabel>
+                        ) : (
+                          "Connect"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+                <span className="font-medium">Password</span>
+                {hasProvider(accounts, "credential") ? (
+                  <span className="text-sm text-muted-foreground">Configured</span>
+                ) : isSyntheticEmail(session.user.email) ? (
+                  <span className="text-right text-sm text-muted-foreground">
+                    Email not available
+                  </span>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => {
+                      setEmail(session.user.email);
+                      setMode("forgot");
+                    }}
+                  >
+                    Add password
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
         <div className="mt-5">
+          {linkedProvider && (
+            <AuthMessage
+              message={{
+                text: `${linkedProvider[0].toUpperCase() + linkedProvider.slice(1)} is connected.`,
+                tone: "success",
+              }}
+            />
+          )}
           <AuthMessage message={message} />
         </div>
       </AuthFrame>
@@ -454,13 +594,7 @@ function AuthPanel() {
   );
 }
 
-function AuthFrame({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function AuthFrame({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10 sm:px-8">
       <Card className="w-full max-w-xl gap-0 border-0 bg-card py-0 shadow-2xl ring-1 ring-foreground/10">

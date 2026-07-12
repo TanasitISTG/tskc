@@ -67,7 +67,12 @@ function createAuth() {
     account: {
       accountLinking: {
         disableImplicitLinking: true,
+        trustedProviders: ["google", "discord"],
+        allowDifferentEmails: true,
       },
+    },
+    onAPIError: {
+      errorURL: "/auth/error",
     },
     rateLimit: {
       storage: "database",
