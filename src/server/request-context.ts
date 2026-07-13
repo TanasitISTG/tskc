@@ -6,12 +6,35 @@ import type { TablesRelationalConfig } from "drizzle-orm/relations";
 import { getDatabase } from "@/db/client";
 import type { shop } from "@/db/schema";
 import { resolveHost } from "@/lib/tenancy";
+import { hasShopSubscriptionAccess } from "@/server/billing-service";
 import { findShopBySubdomain, type ShopDatabase } from "@/server/shops";
 
 export type RequestTenant =
   | { kind: "platform" }
   | { kind: "unknown" }
+  | { kind: "suspended"; subdomain: string }
   | { kind: "storefront"; subdomain: string; shop: typeof shop.$inferSelect };
+
+async function resolveStorefront<
+  TQueryResult extends PgQueryResultHKT,
+  TFullSchema extends Record<string, unknown>,
+  TSchema extends TablesRelationalConfig,
+>(
+  database: ShopDatabase<TQueryResult, TFullSchema, TSchema>,
+  subdomain: string,
+): Promise<RequestTenant> {
+  const resolvedShop = await findShopBySubdomain(database, subdomain);
+
+  if (resolvedShop === null) {
+    return { kind: "unknown" };
+  }
+
+  if (!(await hasShopSubscriptionAccess(resolvedShop.id, new Date(), database))) {
+    return { kind: "suspended", subdomain };
+  }
+
+  return { kind: "storefront", subdomain, shop: resolvedShop };
+}
 
 export function resolveRequestTenant(
   headers: Headers,
@@ -41,14 +64,7 @@ export async function resolveRequestTenant<
     return hostContext;
   }
 
-  const resolvedShop =
-    database === undefined
-      ? await findShopBySubdomain(getDatabase(), hostContext.subdomain)
-      : await findShopBySubdomain(database, hostContext.subdomain);
-
-  if (resolvedShop === null) {
-    return { kind: "unknown" };
-  }
-
-  return { ...hostContext, shop: resolvedShop };
+  return database === undefined
+    ? resolveStorefront(getDatabase(), hostContext.subdomain)
+    : resolveStorefront(database, hostContext.subdomain);
 }

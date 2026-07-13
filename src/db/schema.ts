@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   check,
+  index,
   integer,
   pgTable,
   text,
@@ -50,6 +51,62 @@ export const shopMembership = pgTable(
   (table) => [uniqueIndex("shop_membership_user_id_unique").on(table.userId)],
 );
 
+export const sellerSubscription = pgTable(
+  "seller_subscription",
+  {
+    sellerId: text("seller_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    planId: text("plan_id").notNull(),
+    paymentMethod: text("payment_method").notNull(),
+    status: text("status").notNull(),
+    checkoutStatus: text("checkout_status").notNull(),
+    checkoutAttemptId: text("checkout_attempt_id"),
+    checkoutExpiresAt: timestamp("checkout_expires_at", { withTimezone: true }),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripeInvoiceId: text("stripe_invoice_id"),
+    currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    graceUntil: timestamp("grace_until", { withTimezone: true }),
+    lastEventId: text("last_event_id"),
+    lastEventCreatedAt: timestamp("last_event_created_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check("seller_subscription_plan_v1", sql`${table.planId} = 'branded_website_monthly'`),
+    check(
+      "seller_subscription_status_allowed",
+      sql`${table.status} in ('pending', 'active', 'past_due', 'canceled', 'suspended')`,
+    ),
+    check(
+      "seller_subscription_payment_method_allowed",
+      sql`${table.paymentMethod} in ('card', 'promptpay')`,
+    ),
+    check(
+      "seller_subscription_checkout_status_allowed",
+      sql`${table.checkoutStatus} in ('pending', 'completed', 'abandoned')`,
+    ),
+    uniqueIndex("seller_subscription_stripe_customer_unique").on(table.stripeCustomerId),
+    uniqueIndex("seller_subscription_stripe_subscription_unique").on(table.stripeSubscriptionId),
+    uniqueIndex("seller_subscription_stripe_checkout_unique").on(table.stripeCheckoutSessionId),
+  ],
+);
+
+export const stripeBillingEvent = pgTable("stripe_billing_event", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  objectId: text("object_id").notNull(),
+  sellerId: text("seller_id"),
+  providerCreatedAt: timestamp("provider_created_at", { withTimezone: true }).notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  outcome: text("outcome"),
+});
+
 export const account = pgTable(
   "account",
   {
@@ -92,7 +149,7 @@ export const session = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [uniqueIndex("session_user_id_idx").on(table.userId)],
+  (table) => [index("session_user_id_idx").on(table.userId)],
 );
 
 export const verification = pgTable("verification", {

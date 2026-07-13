@@ -21,6 +21,9 @@ const rawEnvSchema = z
     R2_SECRET_ACCESS_KEY: nonEmptyString.optional(),
     RESEND_API_KEY: nonEmptyString.optional(),
     RESEND_FROM: nonEmptyString.optional(),
+    STRIPE_SECRET_KEY: nonEmptyString.optional(),
+    STRIPE_WEBHOOK_SECRET: nonEmptyString.optional(),
+    STRIPE_PRICE_ID: nonEmptyString.optional(),
   })
   .passthrough();
 
@@ -71,9 +74,18 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     RESEND_API_KEY: env.RESEND_API_KEY,
     RESEND_FROM: env.RESEND_FROM,
   });
+  const stripe = allOrNone("Stripe", {
+    STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_PRICE_ID: env.STRIPE_PRICE_ID,
+  });
   if (env.NODE_ENV === "production") {
     if (env.DATABASE_URL === undefined) {
       throw new Error("DATABASE_URL is required in production");
+    }
+
+    if (stripe === undefined) {
+      throw new Error("Stripe configuration is required in production");
     }
 
     if (
@@ -110,6 +122,11 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     resend: resend && {
       apiKey: resend.RESEND_API_KEY,
       from: resend.RESEND_FROM,
+    },
+    stripe: stripe && {
+      secretKey: stripe.STRIPE_SECRET_KEY,
+      webhookSecret: stripe.STRIPE_WEBHOOK_SECRET,
+      priceId: stripe.STRIPE_PRICE_ID,
     },
   };
 }

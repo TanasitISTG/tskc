@@ -51,6 +51,33 @@ describe("parseServerEnv", () => {
     ).toThrow("Better Auth configuration must set all or none of its variables");
   });
 
+  it("rejects partial Stripe credentials", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "test",
+        STRIPE_PRICE_ID: "price_test",
+      }),
+    ).toThrow("Stripe configuration must set all or none of its variables");
+  });
+
+  it("requires Stripe infrastructure in production", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "production",
+        PLATFORM_DOMAIN: "tskc.example",
+        DATABASE_URL: "postgres://user:password@localhost:5432/tskc",
+        BETTER_AUTH_SECRET: "a-secret-with-at-least-thirty-two-characters",
+        BETTER_AUTH_URL: "https://tskc.example",
+        GOOGLE_CLIENT_ID: "google-client-id",
+        GOOGLE_CLIENT_SECRET: "google-client-secret",
+        DISCORD_CLIENT_ID: "discord-client-id",
+        DISCORD_CLIENT_SECRET: "discord-client-secret",
+        RESEND_API_KEY: "re_test",
+        RESEND_FROM: "TSKC <noreply@tskc.example>",
+      }),
+    ).toThrow("Stripe configuration is required in production");
+  });
+
   it("does not expose unapproved payment-provider configuration", () => {
     expect(
       parseServerEnv({
@@ -79,6 +106,9 @@ describe("parseServerEnv", () => {
         R2_SECRET_ACCESS_KEY: "secret-key",
         RESEND_API_KEY: "re_test",
         RESEND_FROM: "TSKC <noreply@tskc.example>",
+        STRIPE_SECRET_KEY: "stripe_test_key",
+        STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
+        STRIPE_PRICE_ID: "price_test",
       }),
     ).toMatchObject({
       platformDomain: "tskc.example",
@@ -97,6 +127,11 @@ describe("parseServerEnv", () => {
       resend: {
         apiKey: "re_test",
         from: "TSKC <noreply@tskc.example>",
+      },
+      stripe: {
+        secretKey: "stripe_test_key",
+        webhookSecret: "whsec_test_secret",
+        priceId: "price_test",
       },
     });
   });

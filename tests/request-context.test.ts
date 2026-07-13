@@ -10,9 +10,31 @@ describe("resolveRequestTenant", () => {
     async (sql, params) => {
       queries.push(sql);
 
+      if (sql.includes('"seller_subscription"')) {
+        if (params.includes("shop-a")) {
+          return {
+            rows: [["seller-a", "active", "completed", null, false, null, null, null, null]],
+          };
+        }
+
+        if (params.includes("shop-suspended")) {
+          return {
+            rows: [["seller-b", "suspended", "completed", null, false, null, null, null, null]],
+          };
+        }
+      }
+
       if (params.includes("my-shop")) {
         return {
           rows: [["shop-a", "my-shop", new Date("2026-01-01"), new Date("2026-01-01")]],
+        };
+      }
+
+      if (params.includes("suspended-shop")) {
+        return {
+          rows: [
+            ["shop-suspended", "suspended-shop", new Date("2026-01-01"), new Date("2026-01-01")],
+          ],
         };
       }
 
@@ -44,7 +66,17 @@ describe("resolveRequestTenant", () => {
       shop: { id: "shop-a", subdomain: "my-shop" },
     });
 
-    expect(queries).toHaveLength(1);
+    expect(queries).toHaveLength(2);
+  });
+
+  it("returns a suspended tenant for a shop without subscription access", async () => {
+    await expect(
+      resolveRequestTenant(
+        new Headers({ host: "suspended-shop.tskc.example" }),
+        "tskc.example",
+        database,
+      ),
+    ).resolves.toEqual({ kind: "suspended", subdomain: "suspended-shop" });
   });
 
   it("returns unknown for an unclaimed seller host", async () => {

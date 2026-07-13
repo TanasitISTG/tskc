@@ -13,6 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { parseServerEnv } from "@/lib/env";
 import { LANDING_AUTH_HREF } from "@/lib/landing";
+import { createAuthContext } from "@/server/auth-context";
 import { resolveRequestTenant } from "@/server/request-context";
 
 const faqs = [
@@ -55,9 +56,26 @@ function StorefrontPlaceholder() {
   );
 }
 
+function SuspendedStorefront() {
+  return (
+    <main id="main-content" className="grid min-h-screen place-items-center px-6 py-24">
+      <div className="w-full max-w-lg text-center">
+        <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+          Website unavailable
+        </p>
+        <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em]">
+          This website is temporarily offline.
+        </h1>
+        <p className="mt-5 leading-relaxed text-muted-foreground">Please check back later.</p>
+      </div>
+    </main>
+  );
+}
+
 export default async function Home() {
+  const requestHeaders = await headers();
   const tenant = await resolveRequestTenant(
-    await headers(),
+    requestHeaders,
     parseServerEnv(process.env).platformDomain,
   );
 
@@ -69,9 +87,15 @@ export default async function Home() {
     return <StorefrontPlaceholder />;
   }
 
+  if (tenant.kind === "suspended") {
+    return <SuspendedStorefront />;
+  }
+
+  const authContext = await createAuthContext(requestHeaders);
+
   return (
     <main id="main-content" className="overflow-clip">
-      <SiteHeader />
+      <SiteHeader user={authContext.user} />
 
       <section
         className={`${sectionClass} pb-24 pt-20 sm:pb-36 sm:pt-32`}
@@ -353,9 +377,6 @@ export default async function Home() {
           <a className="hover:text-ring" href="#pricing">
             Plan
           </a>
-          <Link className="hover:text-ring" href="/auth">
-            Sign in
-          </Link>
         </nav>
       </footer>
     </main>

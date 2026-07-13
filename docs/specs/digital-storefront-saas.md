@@ -37,7 +37,7 @@ TSKC gives an independent business a direct, branded web presence through one mo
 ### Subscription and website
 
 - A seller subscribes to one monthly branded-website plan, initially THB 149 per month.
-- An active subscription permits website setup, editing, and publication. The final grace-period and suspension rules belong to the subscription task.
+- A verified paid Stripe event activates access. Card cancellation takes effect at period end; payment failure or an overdue PromptPay invoice allows a three-day grace period before management and public publication are suspended.
 - Each seller owns one website in v1. Adding multiple websites requires a new approved product decision.
 - The website contains the seller's brand and business information; it is not a product catalogue or customer-account surface.
 
@@ -46,7 +46,9 @@ TSKC gives an independent business a direct, branded web presence through one mo
 - Stripe is the accepted v1 provider for the one THB 149/month plan; the internal plan ID is `branded_website_monthly` and the provider amount is integer minor units (`14900` satang).
 - Required payment options are credit/debit cards and PromptPay. Mobile banking means completing the PromptPay QR flow in a participating Thai bank app; no separate unsupported payment rail is assumed.
 - Cards use automatic recurring collection. PromptPay/mobile-banking uses Stripe's invoice-based `send_invoice` path and must be modeled as monthly invoice payment, not automatic debit.
+- Card and PromptPay use separate provider paths; PromptPay invoices are due seven days after issuance. A seller has at most one pending checkout, and an abandoned checkout never grants access.
 - Checkout and callbacks must use provider-verified events, idempotency keys, safe same-origin return paths, server-controlled amount/plan/seller values, and an approved security review.
+- Browser success and cancel redirects are informational; only a verified `invoice.paid` event can activate or recover a subscription.
 - The seller website remains a branded-site template boundary: no top-up, receipt verification, balance/wallet ledger, products, carts, payouts, or buyer-account flow is added in v1.
 
 ## Technical Boundaries
@@ -69,6 +71,5 @@ TSKC gives an independent business a direct, branded web presence through one mo
 
 ## Open Decisions
 
-- Stripe checkout/invoice experience, cancellation policy, invoice due date, and subscription grace period.
 - Branded-site hostname/subdomain policy and custom-domain roadmap.
 - The exact website content model and editing experience.

@@ -20,10 +20,10 @@ Every task below must move this path forward. A task is not complete merely beca
 
 Reviewed 2026-07-12 against the code graph, source files, tests, migrations, and all repository Markdown documents.
 
-- Present: the dark landing page at `/`, the account flow at `/auth`, the branded auth error page, the Better Auth API route, server-side session context, host/subdomain validation, and shop ownership helpers.
-- Present: focused Vitest coverage for auth helpers, environment validation, request tenancy, Resend reset behavior, shop ownership, schema constraints, and tRPC auth guards.
-- Missing: plan selection, checkout, subscription persistence and gating, seller onboarding, protected website management, published website rendering, and a production launch path.
-- The current build exposes `/`, `/auth`, `/auth/error`, and `/api/auth/[...all]`; there is no completed seller workspace or public branded-site route yet.
+- Present: the dark landing page at `/`, account flow at `/auth`, billing management at `/billing`, the Better Auth and Stripe webhook API routes, server-side session context, host/subdomain validation, shop ownership helpers, subscription persistence, and subscription-aware setup/public-host gates.
+- Present: focused coverage for auth, environment validation, request tenancy, billing contracts, signed event normalization, replay and ordering behavior, subscription state/access, database constraints, and a gated provider sandbox flow for card and PromptPay.
+- Missing: seller onboarding fields, protected website editing/publication, completed published website rendering, and the production launch path.
+- The current build exposes the platform/account/billing routes and a subscription-gated website setup placeholder; the seller workspace and published branded-site content remain later tasks.
 - Baseline checks currently pass: `bun run lint`, `bun run typecheck`, `bun test`, and `bun run build`.
 
 ## Definition of done
@@ -134,7 +134,7 @@ Every task must meet these rules:
 
 ## Task 4: Stripe payment-provider decision and billing boundary
 
-**Status:** Stripe is selected and the billing boundary is documented; checkout, callbacks, and sandbox verification remain.
+**Status:** Complete. The contract, server configuration, checkout paths, signed callback boundary, and sandbox verification are implemented.
 
 **Description:** Implement the accepted Stripe billing boundary before checkout or callbacks. The contract covers the single THB 149/month plan, integer currency representation, Stripe Product/Price IDs, credit/debit cards, PromptPay QR through Thai mobile banking apps, card auto-renewal, PromptPay invoice collection, safe return paths, verified events, idempotency, cancellation, grace period, suspension, retries, and reconciliation. Do not add top-up, receipt verification, or balance features to the seller-facing website.
 
@@ -146,25 +146,25 @@ Every task must meet these rules:
 
 - [x] Stripe is selected and its sandbox/API/webhook capabilities are documented in approved `docs/decisions/002-stripe-billing-provider.md`.
 - [x] Required payment options are recorded as credit/debit cards plus PromptPay, with mobile banking defined as the participating Thai bank-app QR flow.
-- [ ] The plan has one stable internal identifier, a provider price/product identifier, and an integer minor-unit amount (`THB 14900` if the provider uses satang).
-- [ ] The checkout contract defines authenticated entry, Stripe card subscription and PromptPay invoice paths, success/cancel return paths, duplicate checkout behavior, and what happens when a payment is abandoned.
-- [ ] The callback contract accepts only provider-verified signatures/events, records provider event IDs, is idempotent, and safely handles retries and out-of-order delivery.
-- [ ] The contract defines active, past-due, canceled, grace-period, and suspended behavior for both automatic card renewal and PromptPay invoice payment before Task 5 starts.
-- [ ] Provider secrets stay server-only and no client-controlled amount, plan, seller ID, or subscription status is trusted.
-- [ ] Invalid, replayed, and malformed provider events have no unauthorized subscription side effect.
+- [x] The plan has one stable internal identifier, a provider price/product identifier, and an integer minor-unit amount (`THB 14900` if the provider uses satang).
+- [x] The checkout contract defines authenticated entry, Stripe card subscription and PromptPay invoice paths, success/cancel return paths, duplicate checkout behavior, and what happens when a payment is abandoned.
+- [x] The callback contract accepts only provider-verified signatures/events, records provider event IDs, is idempotent, and safely handles retries and out-of-order delivery.
+- [x] The contract defines active, past-due, canceled, grace-period, and suspended behavior for both automatic card renewal and PromptPay invoice payment before Task 5 starts.
+- [x] Provider secrets stay server-only and no client-controlled amount, plan, seller ID, or subscription status is trusted.
+- [x] Invalid, replayed, and malformed provider events have no unauthorized subscription side effect.
 - [x] The seller-facing website remains a branded-site template boundary and does not add top-up, receipt verification, balances, wallets, products, carts, payouts, or buyer accounts.
 
 **Verification:**
 
 - [x] Review the accepted Stripe provider decision, payment-method constraints, and callback threat model before implementation.
-- [ ] Exercise provider sandbox checkout and signed/invalid/replayed webhook fixtures.
-- [ ] Confirm the chosen environment variables are complete in `.env.example` and production startup validation.
+- [x] Exercise provider sandbox checkout and signed/invalid/replayed webhook fixtures.
+- [x] Confirm the chosen environment variables are complete in `.env.example` and production startup validation.
 
 **Estimated scope:** Small decision plus a medium contract/test slice.
 
 ## Task 5: Subscription lifecycle and access gating
 
-**Status:** Not started.
+**Status:** Complete. Subscription persistence, Stripe checkout/invoice flows, signed event processing, access gating, recovery, cancellation, and billing UI states are implemented.
 
 **Description:** Persist the seller's single subscription and make subscription state the server-side gate for website setup, editing, and publication. The seller must be able to see the current plan state and recover from checkout failures without receiving false access.
 
@@ -176,31 +176,31 @@ Every task must meet these rules:
 
 **Acceptance criteria:**
 
-- [ ] The database enforces at most one v1 subscription per seller and stores the provider customer/subscription identifiers, internal plan, status, billing period, cancellation state, and last verified event metadata needed for reconciliation.
-- [ ] Only a verified provider event can activate or suspend a subscription; a browser success redirect alone cannot grant access.
-- [ ] A seller can start checkout only when authenticated and can view a consistent pending/active/past-due/canceled/suspended state.
-- [ ] Card renewals and PromptPay/mobile-banking invoice payments feed the same server-side subscription state machine without granting access from a browser success redirect.
-- [ ] Website setup, editing, and publication reject inactive sellers server-side with a stable error and an actionable plan link.
-- [ ] The approved grace-period policy is applied consistently to management access and public publication.
-- [ ] Duplicate, delayed, and out-of-order events do not create duplicate subscriptions or move state backward incorrectly.
-- [ ] Seller A cannot read or mutate Seller B's subscription by changing an ID in the request.
-- [ ] The UI has loading, failure, canceled-checkout, and unavailable-provider states with accessible status messages.
+- [x] The database enforces at most one v1 subscription per seller and stores the provider customer/subscription identifiers, internal plan, status, billing period, cancellation state, and last verified event metadata needed for reconciliation.
+- [x] Only a verified provider event can activate or suspend a subscription; a browser success redirect alone cannot grant access.
+- [x] A seller can start checkout only when authenticated and can view a consistent pending/active/past-due/canceled/suspended state.
+- [x] Card renewals and PromptPay/mobile-banking invoice payments feed the same server-side subscription state machine without granting access from a browser success redirect.
+- [x] Website setup and the shared future editing/publication guard reject inactive sellers server-side with a stable error and an actionable plan link.
+- [x] The approved grace-period policy is applied consistently to management access and public publication.
+- [x] Duplicate, delayed, and out-of-order events do not create duplicate subscriptions or move state backward incorrectly.
+- [x] Seller A cannot read or mutate Seller B's subscription by changing an ID in the request.
+- [x] The UI has loading, failure, canceled-checkout, and unavailable-provider states with accessible status messages.
 
 **Verification:**
 
-- [ ] Add unit/integration tests for state transitions, idempotency, ownership, and inactive-access rejection.
-- [ ] Run a provider sandbox checkout for a new seller and verify the database transition only after the signed event is accepted.
-- [ ] Exercise both a card auto-renewal fixture and a PromptPay/mobile-banking invoice fixture, including unpaid, paid, past-due, grace, and recovery transitions.
-- [ ] Test cancellation, grace-period expiry, suspension, and recovery using provider fixtures or a test clock.
+- [x] Add unit/integration tests for state transitions, idempotency, ownership, and inactive-access rejection.
+- [x] Run a provider sandbox checkout for a new seller and verify the database transition only after the signed event is accepted.
+- [x] Exercise both a card automatic-collection fixture and a PromptPay/mobile-banking invoice fixture, including unpaid, paid, past-due, grace, and recovery transitions.
+- [x] Test cancellation, grace-period expiry, suspension, and recovery using provider-backed fixtures and an injected application clock.
 
 **Estimated scope:** Large; split schema, server procedures, and UI into separate implementation increments if more than five files are needed.
 
 ## Checkpoint B: Plan access
 
-- [ ] A new seller cannot enter website setup before verified subscription activation.
-- [ ] A verified active subscription unlocks the next protected step.
-- [ ] A canceled, suspended, or past-due subscription follows the approved policy and cannot bypass it through direct requests.
-- [ ] Replayed and invalid provider events are harmless and observable.
+- [x] A new seller cannot enter website setup before verified subscription activation.
+- [x] A verified active subscription unlocks the next protected step.
+- [x] A canceled, suspended, or past-due subscription follows the approved policy and cannot bypass it through direct requests.
+- [x] Replayed and invalid provider events are harmless and observable.
 
 ## Task 6: Seller onboarding and website identity
 
