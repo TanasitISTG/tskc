@@ -3,6 +3,9 @@ import "server-only";
 import { z } from "zod";
 
 const nonEmptyString = z.string().trim().min(1);
+const httpsUrl = nonEmptyString.url().refine((value) => new URL(value).protocol === "https:", {
+  message: "URL must use HTTPS",
+});
 
 const rawEnvSchema = z
   .object({
@@ -19,6 +22,7 @@ const rawEnvSchema = z
     R2_BUCKET: nonEmptyString.optional(),
     R2_ACCESS_KEY_ID: nonEmptyString.optional(),
     R2_SECRET_ACCESS_KEY: nonEmptyString.optional(),
+    R2_PUBLIC_BASE_URL: httpsUrl.optional(),
     RESEND_API_KEY: nonEmptyString.optional(),
     RESEND_FROM: nonEmptyString.optional(),
     STRIPE_SECRET_KEY: nonEmptyString.optional(),
@@ -57,6 +61,7 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     R2_BUCKET: env.R2_BUCKET,
     R2_ACCESS_KEY_ID: env.R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY: env.R2_SECRET_ACCESS_KEY,
+    R2_PUBLIC_BASE_URL: env.R2_PUBLIC_BASE_URL,
   });
   const betterAuth = allOrNone("Better Auth", {
     BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,
@@ -96,6 +101,15 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     ) {
       throw new Error("Auth configuration is required in production");
     }
+
+    if (r2 === undefined) {
+      throw new Error("R2 configuration is required in production");
+    }
+
+    const publicR2Hostname = new URL(r2.R2_PUBLIC_BASE_URL).hostname;
+    if (publicR2Hostname === "r2.dev" || publicR2Hostname.endsWith(".r2.dev")) {
+      throw new Error("R2_PUBLIC_BASE_URL must use a custom domain in production");
+    }
   }
 
   return {
@@ -118,6 +132,7 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
       bucket: r2.R2_BUCKET,
       accessKeyId: r2.R2_ACCESS_KEY_ID,
       secretAccessKey: r2.R2_SECRET_ACCESS_KEY,
+      publicBaseUrl: r2.R2_PUBLIC_BASE_URL.replace(/\/+$/, ""),
     },
     resend: resend && {
       apiKey: resend.RESEND_API_KEY,

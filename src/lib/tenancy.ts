@@ -1,6 +1,18 @@
 import { z } from "zod";
 
-export const RESERVED_SUBDOMAINS = ["www", "api", "admin"] as const;
+export const RESERVED_SUBDOMAINS = [
+  "www",
+  "api",
+  "admin",
+  "app",
+  "auth",
+  "billing",
+  "setup",
+  "support",
+  "help",
+  "mail",
+  "status",
+] as const;
 
 const subdomainSchema = z
   .string()

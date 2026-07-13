@@ -18,4 +18,16 @@ describe("migration safety", () => {
       '"tag": "0002_remove_legacy_application_roles"',
     );
   });
+
+  it("adds website snapshots without destructive schema changes", () => {
+    const sql = readFileSync(resolve(migrationsPath, "0005_tough_black_tom.sql"), "utf8");
+
+    expect(sql).toContain('ADD COLUMN "draft_content" jsonb');
+    expect(sql).toContain('ADD COLUMN "published_content" jsonb');
+    expect(sql).toContain('ADD COLUMN "published_at" timestamp with time zone');
+    expect(sql).not.toContain("DROP ");
+    expect(readFileSync(resolve(migrationsPath, "meta/_journal.json"), "utf8")).toContain(
+      '"tag": "0005_tough_black_tom"',
+    );
+  });
 });

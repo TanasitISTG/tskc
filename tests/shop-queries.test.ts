@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import * as schema from "@/db/schema";
 import {
   findOwnedShop,
+  findSellerShop,
   ownedMembershipWhere,
   ownedShopWhere,
   updateOwnedShopSubdomain,
@@ -38,10 +39,23 @@ describe("shop ownership query helpers", () => {
       const userId = params.find((value) => value === "seller-a" || value === "seller-b");
       const ownsShop =
         (shopId === "shop-a" && userId === "seller-a") ||
-        (shopId === "shop-b" && userId === "seller-b");
+        (shopId === "shop-b" && userId === "seller-b") ||
+        (shopId === undefined && userId === "seller-a");
 
       return {
-        rows: ownsShop ? [[shopId, "alpha", new Date("2026-01-01"), new Date("2026-01-01")]] : [],
+        rows: ownsShop
+          ? [
+              [
+                shopId ?? "shop-a",
+                "alpha",
+                {},
+                null,
+                null,
+                new Date("2026-01-01"),
+                new Date("2026-01-01"),
+              ],
+            ]
+          : [],
       };
     },
     { schema },
@@ -55,5 +69,10 @@ describe("shop ownership query helpers", () => {
     await expect(updateOwnedShopSubdomain(database, "shop-a", "seller-b", "renamed")).resolves.toBe(
       null,
     );
+  });
+
+  it("looks up the seller website through owner membership", async () => {
+    await expect(findSellerShop(database, "seller-a")).resolves.toMatchObject({ id: "shop-a" });
+    await expect(findSellerShop(database, "seller-b")).resolves.toBeNull();
   });
 });

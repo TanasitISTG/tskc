@@ -1,13 +1,19 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { WebsiteForm } from "@/app/setup/website/website-form";
 import { SiteHeader } from "@/components/site-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
+import { getDatabase } from "@/db/client";
 import { LANDING_AUTH_HREF } from "@/lib/landing";
+import {
+  websiteContentToValues,
+  websiteDraftContentSchema,
+  type WebsiteFormState,
+} from "@/lib/websites";
 import { createAuthContext } from "@/server/auth-context";
 import { requireSellerSubscriptionAccess } from "@/server/billing-service";
+import { getWebsiteAssetUrl } from "@/server/r2";
+import { findSellerShop } from "@/server/shops";
 import { SubscriptionAccessError } from "@/server/subscriptions";
 
 export default async function WebsiteSetupPage() {
@@ -17,8 +23,10 @@ export default async function WebsiteSetupPage() {
     redirect(LANDING_AUTH_HREF);
   }
 
+  const database = getDatabase();
+
   try {
-    await requireSellerSubscriptionAccess(authContext.identity.userId);
+    await requireSellerSubscriptionAccess(authContext.identity.userId, new Date(), database);
   } catch (error) {
     if (error instanceof SubscriptionAccessError) {
       redirect("/billing?access=required");
@@ -27,33 +35,44 @@ export default async function WebsiteSetupPage() {
     throw error;
   }
 
+  const shop = await findSellerShop(database, authContext.identity.userId);
+  const draft = websiteDraftContentSchema.parse(shop?.draftContent ?? {});
+  const initialState: WebsiteFormState = {
+    status: "idle",
+    values: websiteContentToValues(shop?.subdomain ?? "", draft),
+    fieldErrors: {},
+    message: "",
+    publishedAt: shop?.publishedAt?.toISOString(),
+  };
+  const storedAssets = {
+    logo: draft.logo && { ...draft.logo, url: getWebsiteAssetUrl(draft.logo.key) },
+    hero: draft.hero && { ...draft.hero, url: getWebsiteAssetUrl(draft.hero.key) },
+  };
+
   return (
     <>
       <SiteHeader variant="app" user={authContext.user} />
-      <main
-        id="main-content"
-        className="flex min-h-[calc(100vh-5.25rem)] items-center justify-center bg-background px-5 py-10"
-      >
-        <Card className="w-full max-w-xl gap-0 border-0 bg-card py-0 shadow-2xl ring-1 ring-foreground/10">
-          <CardContent className="p-7 sm:p-10">
+      <main id="main-content" className="bg-background px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto w-full max-w-5xl">
+          <div className="max-w-2xl">
             <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
               Website setup
             </p>
-            <h1 className="mt-4 text-4xl font-semibold leading-[0.94] tracking-[-0.065em] sm:text-5xl">
-              Your plan is the next step.
+            <h1 className="mt-3 text-4xl font-semibold leading-none tracking-[-0.055em] sm:text-5xl">
+              Make your storefront unmistakably yours.
             </h1>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-              Your payment is verified and your plan is active. Website identity setup continues in
-              Task 6.
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              Save work-in-progress whenever you need. Publishing creates the exact public snapshot
+              visitors will see until you publish again.
             </p>
-            <Link
-              className={buttonVariants({ size: "lg", className: "mt-7 h-11 rounded-full" })}
-              href="/billing"
-            >
-              Manage plan
-            </Link>
-          </CardContent>
-        </Card>
+          </div>
+
+          <WebsiteForm
+            key={shop?.updatedAt.toISOString() ?? "new"}
+            initialState={initialState}
+            storedAssets={storedAssets}
+          />
+        </div>
       </main>
     </>
   );

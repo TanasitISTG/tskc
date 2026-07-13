@@ -204,7 +204,7 @@ Every task must meet these rules:
 
 ## Task 6: Seller onboarding and website identity
 
-**Status:** Not started. Existing subdomain normalization and host tests are reusable foundations.
+**Status:** Implemented. Production R2 provisioning and the manual two-seller/browser checks remain deployment gates.
 
 **Description:** Give an active seller one protected setup flow for the website identity and essential public information. Finalize the smallest content model before coding; keep draft and published state separate so incomplete edits never leak to public visitors.
 
@@ -214,22 +214,24 @@ Every task must meet these rules:
 
 **Acceptance criteria:**
 
-- [ ] The data model enforces one website per seller and a unique normalized platform subdomain/host label.
-- [ ] The hostname policy defines reserved labels, allowed characters, length limits, case/whitespace normalization, and whether custom domains are out of scope.
-- [ ] The setup form captures only approved v1 fields: business identity, brand presentation, essential public description, contact information, and approved links/assets.
-- [ ] Every field is validated server-side with safe URL, length, format, and asset constraints; invalid input returns field-level errors without data loss.
-- [ ] Setup reads and mutations derive the seller from the session and require an active subscription.
-- [ ] Draft data is never returned by the public host resolver; publication is an explicit action with a visible success/failure state.
-- [ ] Asset handling uses the selected storage boundary (R2 only if approved), validates content type/size, and does not expose storage credentials.
-- [ ] The form is keyboard accessible, uses visible labels and associated errors, and works at mobile widths.
+- [x] The data model enforces one website per seller and a unique normalized platform subdomain/host label.
+- [x] The hostname policy defines reserved labels, allowed characters, length limits, case/whitespace normalization, and whether custom domains are out of scope.
+- [x] The setup form captures only approved v1 fields: business identity, brand presentation, essential public description, contact information, and approved links/assets.
+- [x] Every field is validated server-side with safe URL, length, format, and asset constraints; invalid input returns field-level errors without data loss.
+- [x] Setup reads and mutations derive the seller from the session and require an active subscription.
+- [x] Draft data is never returned by the public host resolver; publication is an explicit action with a visible success/failure state.
+- [x] Asset handling uses R2, validates content type/size, and does not expose storage credentials.
+- [x] The form is keyboard accessible, uses visible labels and associated errors, and works at mobile widths.
 
 **Verification:**
 
-- [ ] Test normalized/duplicate/reserved subdomains, invalid public fields, cross-seller access, inactive subscriptions, and draft isolation.
+- [x] Test normalized/duplicate/reserved subdomains, invalid public fields, cross-seller access, inactive subscriptions, and draft isolation.
 - [ ] Manually create a website as Seller A, confirm Seller B cannot see or edit it, and confirm unpublished data is absent from the public host.
 - [ ] Run the database, server, and accessibility checks before moving to public rendering.
 
 **Estimated scope:** Large; keep the content model and asset path deliberately minimal.
+
+**Implementation notes:** `shop.draft_content` and `shop.published_content` are typed JSONB snapshots added by migration `0005_tough_black_tom.sql`. Publishing writes both snapshots atomically; later draft saves leave the published snapshot unchanged. Logo and hero objects use immutable versioned R2 keys, with 2 MiB and 5 MiB limits respectively. Production requires a custom-domain `R2_PUBLIC_BASE_URL`; `r2.dev` is limited to non-production use. Set `R2_SMOKE=1` to opt into the upload/public-fetch/delete smoke test.
 
 ## Task 7: Public branded website and host resolution
 
@@ -345,9 +347,9 @@ Do not mark v1 complete until every item below passes in a production-like envir
 ## Open decisions required before implementation reaches the dependent task
 
 - Exact Stripe Product/Price IDs, invoice due date, cancellation policy, grace period, past-due/suspension behavior, and public-site visibility policy.
-- Whether the current one-to-one `shop_membership` ownership table remains or is replaced by a direct seller/website owner relation.
-- Platform subdomain rules, reserved labels, and the future custom-domain boundary.
-- Exact v1 website content fields and whether R2 is required for brand assets.
+- Resolved: retain the one-to-one `shop_membership` ownership table and derive ownership from the authenticated seller.
+- Resolved: platform subdomains are normalized 1–63 character DNS labels; `www`, `api`, `admin`, `app`, `auth`, `billing`, `setup`, `support`, `help`, `mail`, and `status` are reserved; custom domains remain out of scope.
+- Resolved: v1 stores business name, description, optional tagline/contact/address/accent/link fields, and R2-hosted logo/hero assets.
 
 ## Deliberately excluded from v1
 

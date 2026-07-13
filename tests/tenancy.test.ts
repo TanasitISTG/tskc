@@ -19,6 +19,22 @@ describe("normalizeSubdomain", () => {
       expect(() => normalizeSubdomain(value)).toThrow();
     }
   });
+
+  it("reserves platform and operational labels", () => {
+    expect(RESERVED_SUBDOMAINS).toEqual([
+      "www",
+      "api",
+      "admin",
+      "app",
+      "auth",
+      "billing",
+      "setup",
+      "support",
+      "help",
+      "mail",
+      "status",
+    ]);
+  });
 });
 
 describe("resolveHost", () => {

@@ -26,16 +26,24 @@ describe("resolveRequestTenant", () => {
 
       if (params.includes("my-shop")) {
         return {
-          rows: [["shop-a", "my-shop", new Date("2026-01-01"), new Date("2026-01-01")]],
+          rows: [["shop-a", "my-shop", { businessName: "My shop", description: "Published" }]],
         };
       }
 
       if (params.includes("suspended-shop")) {
         return {
           rows: [
-            ["shop-suspended", "suspended-shop", new Date("2026-01-01"), new Date("2026-01-01")],
+            [
+              "shop-suspended",
+              "suspended-shop",
+              { businessName: "Suspended", description: "Published" },
+            ],
           ],
         };
+      }
+
+      if (params.includes("draft-shop")) {
+        return { rows: [] };
       }
 
       return { rows: [] };
@@ -67,6 +75,33 @@ describe("resolveRequestTenant", () => {
     });
 
     expect(queries).toHaveLength(2);
+  });
+
+  it("returns only the immutable published snapshot", async () => {
+    const tenant = await resolveRequestTenant(
+      new Headers({ host: "my-shop.tskc.example" }),
+      "tskc.example",
+      database,
+    );
+
+    expect(tenant).toMatchObject({
+      kind: "storefront",
+      shop: {
+        publishedContent: { businessName: "My shop", description: "Published" },
+      },
+    });
+    expect(tenant.kind === "storefront" ? tenant.shop : null).not.toHaveProperty("draftContent");
+    expect(queries[0]).toContain('"shop"."published_content" is not null');
+  });
+
+  it("treats an unpublished website as unknown", async () => {
+    await expect(
+      resolveRequestTenant(
+        new Headers({ host: "draft-shop.tskc.example" }),
+        "tskc.example",
+        database,
+      ),
+    ).resolves.toEqual({ kind: "unknown" });
   });
 
   it("returns a suspended tenant for a shop without subscription access", async () => {

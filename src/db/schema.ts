@@ -5,11 +5,14 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+
+import type { WebsiteDraftContent, WebsitePublishedContent } from "@/lib/websites";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -28,6 +31,9 @@ export const shop = pgTable(
   {
     id: text("id").primaryKey(),
     subdomain: text("subdomain").notNull(),
+    draftContent: jsonb("draft_content").$type<WebsiteDraftContent>().notNull().default({}),
+    publishedContent: jsonb("published_content").$type<WebsitePublishedContent>(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },

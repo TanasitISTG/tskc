@@ -4,7 +4,7 @@ import type { PgQueryResultHKT } from "drizzle-orm/pg-core/session";
 import type { TablesRelationalConfig } from "drizzle-orm/relations";
 
 import { getDatabase } from "@/db/client";
-import type { shop } from "@/db/schema";
+import type { WebsitePublishedContent } from "@/lib/websites";
 import { resolveHost } from "@/lib/tenancy";
 import { hasShopSubscriptionAccess } from "@/server/billing-service";
 import { findShopBySubdomain, type ShopDatabase } from "@/server/shops";
@@ -13,7 +13,11 @@ export type RequestTenant =
   | { kind: "platform" }
   | { kind: "unknown" }
   | { kind: "suspended"; subdomain: string }
-  | { kind: "storefront"; subdomain: string; shop: typeof shop.$inferSelect };
+  | {
+      kind: "storefront";
+      subdomain: string;
+      shop: { id: string; subdomain: string; publishedContent: WebsitePublishedContent };
+    };
 
 async function resolveStorefront<
   TQueryResult extends PgQueryResultHKT,

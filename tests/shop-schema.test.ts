@@ -11,6 +11,10 @@ describe("shop tenancy schema", () => {
     expect(shop.subdomain.notNull).toBe(true);
     expect(config.checks.map((check) => check.name)).toContain("shop_subdomain_normalized");
     expect(config.indexes.some((index) => index.config.unique)).toBe(true);
+    expect(shop.draftContent.notNull).toBe(true);
+    expect(shop.draftContent.hasDefault).toBe(true);
+    expect(shop.publishedContent.notNull).toBe(false);
+    expect(shop.publishedAt.notNull).toBe(false);
   });
 
   it("enforces one owner membership per shop and per seller", () => {

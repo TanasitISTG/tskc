@@ -1,12 +1,13 @@
 import "server-only";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PgQueryResultHKT } from "drizzle-orm/pg-core/session";
 import type { TablesRelationalConfig } from "drizzle-orm/relations";
 
 import { shop, shopMembership } from "@/db/schema";
 import { normalizeSubdomain } from "@/lib/tenancy";
+import { websitePublishedContentSchema } from "@/lib/websites";
 
 export type ShopDatabase<
   TQueryResult extends PgQueryResultHKT,
@@ -31,12 +32,21 @@ export async function findShopBySubdomain<
   TSchema extends TablesRelationalConfig,
 >(database: ShopDatabase<TQueryResult, TFullSchema, TSchema>, subdomain: string) {
   const [result] = await database
-    .select()
+    .select({
+      id: shop.id,
+      subdomain: shop.subdomain,
+      publishedContent: shop.publishedContent,
+    })
     .from(shop)
-    .where(eq(shop.subdomain, normalizeSubdomain(subdomain)))
+    .where(and(eq(shop.subdomain, normalizeSubdomain(subdomain)), isNotNull(shop.publishedContent)))
     .limit(1);
 
-  return result ?? null;
+  return result === undefined
+    ? null
+    : {
+        ...result,
+        publishedContent: websitePublishedContentSchema.parse(result.publishedContent),
+      };
 }
 
 export async function findOwnedShop<
@@ -49,6 +59,21 @@ export async function findOwnedShop<
     .from(shop)
     .innerJoin(shopMembership, eq(shopMembership.shopId, shop.id))
     .where(ownedMembershipWhere(shopId, userId))
+    .limit(1);
+
+  return result?.shop ?? null;
+}
+
+export async function findSellerShop<
+  TQueryResult extends PgQueryResultHKT,
+  TFullSchema extends Record<string, unknown>,
+  TSchema extends TablesRelationalConfig,
+>(database: ShopDatabase<TQueryResult, TFullSchema, TSchema>, userId: string) {
+  const [result] = await database
+    .select({ shop })
+    .from(shop)
+    .innerJoin(shopMembership, eq(shopMembership.shopId, shop.id))
+    .where(eq(shopMembership.userId, userId))
     .limit(1);
 
   return result?.shop ?? null;

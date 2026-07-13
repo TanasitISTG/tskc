@@ -42,6 +42,60 @@ describe("parseServerEnv", () => {
     ).toThrow("R2 configuration must set all or none of its variables");
   });
 
+  it("requires R2 infrastructure in production", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "production",
+        PLATFORM_DOMAIN: "tskc.example",
+        DATABASE_URL: "postgres://user:password@localhost:5432/tskc",
+        BETTER_AUTH_SECRET: "a-secret-with-at-least-thirty-two-characters",
+        BETTER_AUTH_URL: "https://tskc.example",
+        GOOGLE_CLIENT_ID: "google-client-id",
+        GOOGLE_CLIENT_SECRET: "google-client-secret",
+        DISCORD_CLIENT_ID: "discord-client-id",
+        DISCORD_CLIENT_SECRET: "discord-client-secret",
+        RESEND_API_KEY: "re_test",
+        RESEND_FROM: "TSKC <noreply@tskc.example>",
+        STRIPE_SECRET_KEY: "stripe_test_key",
+        STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
+        STRIPE_PRICE_ID: "price_test",
+      }),
+    ).toThrow("R2 configuration is required in production");
+  });
+
+  it("permits r2.dev only outside production", () => {
+    const r2 = {
+      R2_ENDPOINT: "https://account.r2.cloudflarestorage.com",
+      R2_BUCKET: "tskc-files",
+      R2_ACCESS_KEY_ID: "access-key",
+      R2_SECRET_ACCESS_KEY: "secret-key",
+      R2_PUBLIC_BASE_URL: "https://pub-example.r2.dev",
+    };
+
+    expect(parseServerEnv({ NODE_ENV: "test", ...r2 }).r2?.publicBaseUrl).toBe(
+      "https://pub-example.r2.dev",
+    );
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "production",
+        PLATFORM_DOMAIN: "tskc.example",
+        DATABASE_URL: "postgres://user:password@localhost:5432/tskc",
+        BETTER_AUTH_SECRET: "a-secret-with-at-least-thirty-two-characters",
+        BETTER_AUTH_URL: "https://tskc.example",
+        GOOGLE_CLIENT_ID: "google-client-id",
+        GOOGLE_CLIENT_SECRET: "google-client-secret",
+        DISCORD_CLIENT_ID: "discord-client-id",
+        DISCORD_CLIENT_SECRET: "discord-client-secret",
+        RESEND_API_KEY: "re_test",
+        RESEND_FROM: "TSKC <noreply@tskc.example>",
+        STRIPE_SECRET_KEY: "stripe_test_key",
+        STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
+        STRIPE_PRICE_ID: "price_test",
+        ...r2,
+      }),
+    ).toThrow("R2_PUBLIC_BASE_URL must use a custom domain in production");
+  });
+
   it("rejects partial Better Auth credentials", () => {
     expect(() =>
       parseServerEnv({
@@ -104,6 +158,7 @@ describe("parseServerEnv", () => {
         R2_BUCKET: "tskc-files",
         R2_ACCESS_KEY_ID: "access-key",
         R2_SECRET_ACCESS_KEY: "secret-key",
+        R2_PUBLIC_BASE_URL: "https://assets.tskc.example",
         RESEND_API_KEY: "re_test",
         RESEND_FROM: "TSKC <noreply@tskc.example>",
         STRIPE_SECRET_KEY: "stripe_test_key",
@@ -123,6 +178,7 @@ describe("parseServerEnv", () => {
       r2: {
         endpoint: "https://account.r2.cloudflarestorage.com",
         bucket: "tskc-files",
+        publicBaseUrl: "https://assets.tskc.example",
       },
       resend: {
         apiKey: "re_test",
