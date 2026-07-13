@@ -235,7 +235,7 @@ Every task must meet these rules:
 
 ## Task 7: Public branded website and host resolution
 
-**Status:** Host resolution exists; public rendering is still a placeholder.
+**Status:** Implemented. A production-like preview remains gated on the existing production R2 custom domain requirement.
 
 **Description:** Replace `StorefrontPlaceholder` with a safe public website route. Preserve the existing platform-vs-seller host boundary and render only the seller's published public record. Unknown, malformed, unpublished, and suspended hosts need clear controlled behavior.
 
@@ -245,19 +245,19 @@ Every task must meet these rules:
 
 **Acceptance criteria:**
 
-- [ ] The configured platform host renders the marketing landing page.
-- [ ] A known seller host resolves through the validated `Host` header path and renders only published fields for that seller.
-- [ ] Unknown, unrelated, nested, malformed, and reserved hosts do not resolve another seller and return the documented 404/unavailable state.
-- [ ] Forwarded or client-supplied host values are not trusted over the request host boundary already defined by the tenancy tests.
-- [ ] Unpublished and suspended sites follow the approved public behavior and never reveal drafts or private subscription data.
-- [ ] Public content is escaped/rendered safely, assets use approved URLs, and no account/session/payment data is exposed.
-- [ ] The public page has a stable responsive layout, semantic structure, accessible contrast/focus behavior, and no marketplace/storefront copy.
+- [x] The configured platform host renders the marketing landing page.
+- [x] A known seller host resolves through the validated `Host` header path and renders only published fields for that seller.
+- [x] Unknown, unrelated, nested, malformed, and reserved hosts do not resolve another seller and return the documented 404/unavailable state.
+- [x] Forwarded or client-supplied host values are not trusted over the request host boundary already defined by the tenancy tests.
+- [x] Unpublished and suspended sites follow the approved public behavior and never reveal drafts or private subscription data.
+- [x] Public content is escaped/rendered safely, assets use approved URLs, and no account/session/payment data is exposed.
+- [x] The public page has a stable responsive layout, semantic structure, accessible contrast/focus behavior, and no marketplace/storefront copy.
 
 **Verification:**
 
-- [ ] Add request-level tests for platform, known seller, unknown seller, malformed host, unpublished, and suspended states.
+- [x] Add request-level tests for platform, known seller, unknown seller, malformed host, unpublished, and suspended states.
 - [ ] Run a local host-header smoke test and a production-like preview with a real published record.
-- [ ] Verify the public response does not contain draft fields, session tokens, provider IDs, or private contact data.
+- [x] Verify the public response does not contain draft fields, session tokens, provider IDs, or private contact data.
 
 **Estimated scope:** Medium.
 

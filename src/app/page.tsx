@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
+import { BrandedWebsite } from "@/components/branded-website";
 import { SiteHeader } from "@/components/site-header";
 import {
   Accordion,
@@ -14,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { parseServerEnv } from "@/lib/env";
 import { LANDING_AUTH_HREF } from "@/lib/landing";
 import { createAuthContext } from "@/server/auth-context";
+import { getWebsiteAssetUrl } from "@/server/r2";
 import { resolveRequestTenant } from "@/server/request-context";
 
 const faqs = [
@@ -37,24 +39,6 @@ const faqs = [
 const sectionClass =
   "mx-auto w-[min(1200px,calc(100%-40px))] md:w-[min(1200px,calc(100%-clamp(40px,8vw,96px)))]";
 const eyebrowClass = "text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase";
-
-function StorefrontPlaceholder() {
-  return (
-    <main id="main-content" className="grid min-h-screen place-items-center px-6 py-24">
-      <div className="w-full max-w-xl text-center">
-        <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-          TSKC branded website
-        </p>
-        <h1 className="mt-4 text-5xl font-semibold tracking-[-0.06em]">
-          Branded website coming soon.
-        </h1>
-        <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-          This seller&apos;s website is being prepared.
-        </p>
-      </div>
-    </main>
-  );
-}
 
 function SuspendedStorefront() {
   return (
@@ -84,7 +68,14 @@ export default async function Home() {
   }
 
   if (tenant.kind === "storefront") {
-    return <StorefrontPlaceholder />;
+    const content = tenant.shop.publishedContent;
+    return (
+      <BrandedWebsite
+        content={content}
+        logoUrl={content.logo ? getWebsiteAssetUrl(content.logo.key) : undefined}
+        heroUrl={content.hero ? getWebsiteAssetUrl(content.hero.key) : undefined}
+      />
+    );
   }
 
   if (tenant.kind === "suspended") {

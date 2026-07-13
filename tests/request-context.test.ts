@@ -84,13 +84,15 @@ describe("resolveRequestTenant", () => {
       database,
     );
 
-    expect(tenant).toMatchObject({
+    expect(tenant).toEqual({
       kind: "storefront",
+      subdomain: "my-shop",
       shop: {
+        id: "shop-a",
+        subdomain: "my-shop",
         publishedContent: { businessName: "My shop", description: "Published" },
       },
     });
-    expect(tenant.kind === "storefront" ? tenant.shop : null).not.toHaveProperty("draftContent");
     expect(queries[0]).toContain('"shop"."published_content" is not null');
   });
 
