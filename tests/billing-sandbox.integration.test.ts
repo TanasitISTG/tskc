@@ -13,7 +13,9 @@ import {
 import { processBillingEvent } from "@/server/subscriptions";
 import { normalizeStripeBillingEvent, verifyStripeWebhook } from "@/server/stripe-billing";
 
-if (process.env.RUN_STRIPE_SANDBOX === "true")
+if (process.env.RUN_STRIPE_SANDBOX !== "true")
+  it.skip("requires RUN_STRIPE_SANDBOX=true", () => {});
+else
   describe("Stripe sandbox subscription flow", () => {
     const database = getDatabase();
     const suffix = Date.now().toString(36);
