@@ -235,7 +235,7 @@ Every task must meet these rules:
 
 ## Task 7: Public branded website and host resolution
 
-**Status:** Implemented. A production-like preview remains gated on the existing production R2 custom domain requirement.
+**Status:** Complete.
 
 **Description:** Replace `StorefrontPlaceholder` with a safe public website route. Preserve the existing platform-vs-seller host boundary and render only the seller's published public record. Unknown, malformed, unpublished, and suspended hosts need clear controlled behavior.
 
@@ -256,7 +256,7 @@ Every task must meet these rules:
 **Verification:**
 
 - [x] Add request-level tests for platform, known seller, unknown seller, malformed host, unpublished, and suspended states.
-- [ ] Run a local host-header smoke test and a production-like preview with a real published record.
+- [x] Run a local host-header smoke test and a production-like preview with a real published record.
 - [x] Verify the public response does not contain draft fields, session tokens, provider IDs, or private contact data.
 
 **Estimated scope:** Medium.
