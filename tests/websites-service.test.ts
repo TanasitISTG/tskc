@@ -3,9 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import type { shop } from "@/db/schema";
 import type { WebsiteAssetRef } from "@/lib/websites";
 import {
+  WebsiteConflictError,
   WebsiteOwnershipError,
   mergeWebsiteAssets,
   persistSellerWebsite,
+  unpublishSellerWebsite,
   websiteConflictKind,
 } from "@/server/websites";
 
@@ -104,6 +106,35 @@ describe("persistSellerWebsite", () => {
     expect(saved.publishedAt).toEqual(now);
   });
 
+  it("unpublishes without losing the saved draft", async () => {
+    let stored: typeof shop.$inferSelect = {
+      ...baseShop,
+      draftContent: { businessName: "North Star", description: "Draft copy" },
+      publishedContent: { businessName: "North Star", description: "Live copy" },
+      publishedAt: now,
+    };
+    const unpublishedAt = new Date("2026-07-14T10:00:00.000Z");
+    const { database } = fakeDatabase((values) => {
+      stored = { ...stored, ...values } as typeof shop.$inferSelect;
+      return [stored];
+    });
+
+    const result = await unpublishSellerWebsite(database, {
+      sellerId: "seller-a",
+      shopId: "shop-a",
+      expectedUpdatedAt: stored.updatedAt,
+      now: unpublishedAt,
+    });
+
+    expect(result.draftContent).toEqual({
+      businessName: "North Star",
+      description: "Draft copy",
+    });
+    expect(result.publishedContent).toBeNull();
+    expect(result.publishedAt).toBeNull();
+    expect(result.updatedAt).toEqual(unpublishedAt);
+  });
+
   it("fails a stale or cross-owner update", async () => {
     const { database } = fakeDatabase(() => []);
 
@@ -118,6 +149,23 @@ describe("persistSellerWebsite", () => {
         now,
       }),
     ).rejects.toThrow(WebsiteOwnershipError);
+  });
+
+  it("rejects a stale update without overwriting newer content", async () => {
+    const { database } = fakeDatabase(() => []);
+
+    await expect(
+      persistSellerWebsite(database, {
+        sellerId: "seller-a",
+        shopId: "shop-a",
+        existingShop: baseShop,
+        subdomain: "north-star",
+        draftContent: { businessName: "Stale draft" },
+        intent: "save",
+        expectedUpdatedAt: new Date("2026-07-13T09:00:00.000Z"),
+        now,
+      }),
+    ).rejects.toThrow(WebsiteConflictError);
   });
 });
 

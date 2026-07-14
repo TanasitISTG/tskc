@@ -13,6 +13,7 @@ describe("appRouter", () => {
     const caller = appRouter.createCaller({ accountEmail: null, identity: null, user: null });
 
     await expect(caller.auth.me()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.website.get()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
   it("allows an authenticated seller through protected procedures", async () => {
@@ -25,5 +26,22 @@ describe("appRouter", () => {
     await expect(caller.auth.me()).resolves.toEqual({
       userId: "seller-1",
     });
+  });
+
+  it("rejects client-supplied ownership fields before database access", async () => {
+    const caller = appRouter.createCaller({
+      accountEmail: "seller@example.com",
+      identity: { userId: "seller-1" },
+      user: { name: "Seller" },
+    });
+
+    await expect(
+      caller.website.save({
+        sellerId: "seller-2",
+        subdomain: "north-star",
+        draftContent: { businessName: "North Star", description: "A focused shop" },
+        intent: "save",
+      } as never),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

@@ -3,11 +3,13 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Colorful from "@uiw/react-color-colorful";
 import Image, { type ImageLoader } from "next/image";
+import Link from "next/link";
 
 import { saveWebsiteAction } from "@/app/setup/website/actions";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { websitePublishedContentSchema, websiteValuesToContent } from "@/lib/websites";
 import type {
   WebsiteAssetRef,
   WebsiteField,
@@ -170,13 +172,25 @@ function AccentColorField({ value, errors }: { value: string; errors?: string[] 
 export function WebsiteForm({
   initialState,
   storedAssets,
+  publicUrl,
+  platformDomain,
 }: {
   initialState: WebsiteFormState;
   storedAssets: { logo?: StoredAsset; hero?: StoredAsset };
+  publicUrl?: string;
+  platformDomain: string;
 }) {
   const [state, formAction, pending] = useActionState(saveWebsiteAction, initialState);
   const errorSummary = useRef<HTMLDivElement>(null);
   const errorEntries = Object.entries(state.fieldErrors) as [WebsiteField, string[]][];
+  const canPreview =
+    state.updatedAt !== undefined &&
+    websitePublishedContentSchema.safeParse(websiteValuesToContent(state.values)).success;
+  const resolvedPublicUrl =
+    publicUrl ??
+    (state.publishedAt && state.values.subdomain
+      ? `${platformDomain.startsWith("localhost") ? "http" : "https"}://${state.values.subdomain}.${platformDomain}`
+      : undefined);
 
   useEffect(() => {
     if (state.status === "error") {
@@ -197,6 +211,7 @@ export function WebsiteForm({
 
   return (
     <form action={formAction} className="mt-8 grid gap-6">
+      {state.updatedAt && <input type="hidden" name="expectedUpdatedAt" value={state.updatedAt} />}
       {state.status === "error" && (
         <div
           ref={errorSummary}
@@ -400,13 +415,27 @@ export function WebsiteForm({
         <div aria-live="polite" role="status" className="min-h-5 text-sm text-muted-foreground">
           {pending
             ? "Saving…"
-            : state.status === "saved" || state.status === "published"
+            : state.status === "saved" ||
+                state.status === "published" ||
+                state.status === "unpublished"
               ? state.message
               : state.publishedAt
                 ? `Last published ${new Date(state.publishedAt).toLocaleString()}`
                 : "Not published yet"}
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+          {canPreview ? (
+            <Link
+              className={buttonVariants({ variant: "outline", className: "h-11 min-w-32" })}
+              href="/setup/website/preview"
+            >
+              Preview draft
+            </Link>
+          ) : (
+            <span className="flex min-h-11 items-center justify-center px-2 text-sm text-muted-foreground">
+              Add required fields to preview
+            </span>
+          )}
           <Button
             className="h-11 min-w-32"
             type="submit"
@@ -426,6 +455,30 @@ export function WebsiteForm({
           >
             {pending ? "Publishing…" : "Publish website"}
           </Button>
+          {state.publishedAt && (
+            <>
+              {resolvedPublicUrl && (
+                <a
+                  className={buttonVariants({ className: "h-11 min-w-40" })}
+                  href={resolvedPublicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open public website
+                </a>
+              )}
+              <Button
+                className="h-11 min-w-32"
+                type="submit"
+                name="intent"
+                value="unpublish"
+                variant="outline"
+                disabled={pending}
+              >
+                Unpublish
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </form>

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { and, eq } from "drizzle-orm";
 import { shop, shopMembership } from "@/db/schema";
 import type { WebsiteAssetKind } from "@/server/r2";
 import { getDatabase } from "@/db/client";
@@ -18,12 +19,20 @@ type PersistWebsiteInput = {
   draftContent: WebsiteDraftContent;
   intent: WebsiteIntent;
   now: Date;
+  expectedUpdatedAt?: Date;
 };
 
 export class WebsiteOwnershipError extends Error {
   constructor() {
     super("The website is not owned by this seller");
     this.name = "WebsiteOwnershipError";
+  }
+}
+
+export class WebsiteConflictError extends Error {
+  constructor() {
+    super("This website changed in another session. Reload and try again.");
+    this.name = "WebsiteConflictError";
   }
 }
 
@@ -111,11 +120,51 @@ export async function persistSellerWebsite(
   const [updated] = await database
     .update(shop)
     .set(values)
-    .where(ownedShopWhere(input.existingShop.id, input.sellerId))
+    .where(
+      input.expectedUpdatedAt === undefined
+        ? ownedShopWhere(input.existingShop.id, input.sellerId)
+        : and(
+            ownedShopWhere(input.existingShop.id, input.sellerId),
+            eq(shop.updatedAt, input.expectedUpdatedAt),
+          ),
+    )
     .returning();
 
   if (updated === undefined) {
-    throw new WebsiteOwnershipError();
+    throw input.expectedUpdatedAt === undefined
+      ? new WebsiteOwnershipError()
+      : new WebsiteConflictError();
+  }
+
+  return updated;
+}
+
+export async function unpublishSellerWebsite(
+  database: WebsiteDatabase,
+  input: {
+    sellerId: string;
+    shopId: string;
+    expectedUpdatedAt?: Date;
+    now: Date;
+  },
+): Promise<typeof shop.$inferSelect> {
+  const [updated] = await database
+    .update(shop)
+    .set({ publishedContent: null, publishedAt: null, updatedAt: input.now })
+    .where(
+      input.expectedUpdatedAt === undefined
+        ? ownedShopWhere(input.shopId, input.sellerId)
+        : and(
+            ownedShopWhere(input.shopId, input.sellerId),
+            eq(shop.updatedAt, input.expectedUpdatedAt),
+          ),
+    )
+    .returning();
+
+  if (updated === undefined) {
+    throw input.expectedUpdatedAt === undefined
+      ? new WebsiteOwnershipError()
+      : new WebsiteConflictError();
   }
 
   return updated;

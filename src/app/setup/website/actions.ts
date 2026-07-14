@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 
 import { readWebsiteImageFile } from "@/app/setup/website/file-input";
 import { getDatabase } from "@/db/client";
-import { requireSession } from "@/lib/auth-guards";
+import { AuthError, requireSession } from "@/lib/auth-guards";
 import { RESERVED_SUBDOMAINS, normalizeSubdomain } from "@/lib/tenancy";
 import {
   WEBSITE_TEXT_FIELDS,
@@ -33,6 +33,9 @@ import { SubscriptionAccessError } from "@/server/subscriptions";
 import {
   mergeWebsiteAssets,
   persistSellerWebsite,
+  unpublishSellerWebsite,
+  WebsiteConflictError,
+  WebsiteOwnershipError,
   websiteConflictKind,
   type WebsiteIntent,
 } from "@/server/websites";
@@ -56,8 +59,10 @@ function errorState(
   values: WebsiteFormValues,
   message: string,
   fieldErrors: Partial<Record<WebsiteField, string[]>> = {},
+  updatedAt?: string,
+  publishedAt?: string,
 ): WebsiteFormState {
-  return { status: "error", values, fieldErrors, message };
+  return { status: "error", values, fieldErrors, message, updatedAt, publishedAt };
 }
 
 function validationErrors(error: { issues: { path: PropertyKey[]; message: string }[] }) {
@@ -82,18 +87,20 @@ async function compensate(keys: string[]) {
   }
 }
 
-export async function saveWebsiteAction(
-  _previousState: WebsiteFormState,
+async function saveWebsiteActionInternal(
+  previousState: WebsiteFormState,
   formData: FormData,
 ): Promise<WebsiteFormState> {
   const values = readValues(formData);
+  const fail = (message: string, fieldErrors: Partial<Record<WebsiteField, string[]>> = {}) =>
+    errorState(values, message, fieldErrors, previousState.updatedAt, previousState.publishedAt);
   const identity = requireSession((await createAuthContext(await headers())).identity);
 
   try {
     await requireSellerSubscriptionAccess(identity.userId);
   } catch (error) {
     if (error instanceof SubscriptionAccessError) {
-      return errorState(values, "An active subscription is required to save your website.");
+      return fail("An active subscription is required to save your website.");
     }
 
     throw error;
@@ -103,8 +110,67 @@ export async function saveWebsiteAction(
   const existingShop = await findSellerShop(database, identity.userId);
   const rawIntent = formData.get("intent");
 
-  if (rawIntent !== "save" && rawIntent !== "publish") {
-    return errorState(values, "Choose Save draft or Publish website and try again.");
+  if (rawIntent !== "save" && rawIntent !== "publish" && rawIntent !== "unpublish") {
+    return fail("Choose Save draft, Publish website, or Unpublish and try again.");
+  }
+
+  const expectedUpdatedAtValue = formData.get("expectedUpdatedAt");
+  const expectedUpdatedAt =
+    typeof expectedUpdatedAtValue === "string" && expectedUpdatedAtValue !== ""
+      ? new Date(expectedUpdatedAtValue)
+      : undefined;
+
+  if (expectedUpdatedAt !== undefined && Number.isNaN(expectedUpdatedAt.getTime())) {
+    return fail("Your workspace is out of date. Refresh and try again.");
+  }
+
+  if (rawIntent === "unpublish") {
+    if (existingShop === null || existingShop.publishedContent === null) {
+      return fail("This website is not currently published.");
+    }
+
+    try {
+      const unpublished = await unpublishSellerWebsite(database, {
+        sellerId: identity.userId,
+        shopId: existingShop.id,
+        expectedUpdatedAt,
+        now: new Date(),
+      });
+
+      const replacedKeys = unreferencedWebsiteAssetKeys(
+        existingShop.draftContent,
+        existingShop.publishedContent,
+        unpublished.draftContent,
+        unpublished.publishedContent,
+      );
+
+      try {
+        await deleteWebsiteAssets(replacedKeys);
+      } catch {
+        console.error("Failed to remove unpublished website assets after a successful update");
+      }
+
+      revalidatePath("/setup/website");
+      revalidatePath("/setup/website/preview");
+
+      return {
+        status: "unpublished",
+        values: websiteContentToValues(unpublished.subdomain, unpublished.draftContent),
+        fieldErrors: {},
+        message: "Website unpublished. Your draft is still saved.",
+        updatedAt: unpublished.updatedAt.toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof WebsiteConflictError) {
+        return fail(error.message);
+      }
+
+      if (error instanceof WebsiteOwnershipError) {
+        return fail("This website is no longer available to your account.");
+      }
+
+      throw error;
+    }
   }
 
   const intent: WebsiteIntent = rawIntent;
@@ -120,7 +186,7 @@ export async function saveWebsiteAction(
         : RESERVED_SUBDOMAINS.includes(normalized as never)
           ? "This subdomain is reserved."
           : "Use 1–63 letters, numbers, or internal hyphens.";
-    return errorState(values, "Fix the highlighted field and try again.", {
+    return fail("Fix the highlighted field and try again.", {
       subdomain: [message],
     });
   }
@@ -132,11 +198,7 @@ export async function saveWebsiteAction(
       : websiteDraftContentSchema.safeParse(content);
 
   if (!parsed.success) {
-    return errorState(
-      values,
-      "Fix the highlighted fields and try again.",
-      validationErrors(parsed.error),
-    );
+    return fail("Fix the highlighted fields and try again.", validationErrors(parsed.error));
   }
 
   const removals = new Set<WebsiteAssetKind>(
@@ -158,8 +220,7 @@ export async function saveWebsiteAction(
   } catch (error) {
     if (error instanceof WebsiteStorageError) {
       const retry = " Select the file again before retrying.";
-      return errorState(
-        values,
+      return fail(
         error.field === undefined ? error.message : `Image upload failed.${retry}`,
         error.field === undefined ? {} : { [error.field]: [`${error.message}${retry}`] },
       );
@@ -184,6 +245,7 @@ export async function saveWebsiteAction(
       subdomain,
       draftContent,
       intent,
+      expectedUpdatedAt,
       now: new Date(),
     });
   } catch (error) {
@@ -191,13 +253,21 @@ export async function saveWebsiteAction(
     const conflict = websiteConflictKind(error);
 
     if (conflict === "subdomain") {
-      return errorState(values, "That subdomain is already in use.", {
+      return fail("That subdomain is already in use.", {
         subdomain: ["Choose a different subdomain."],
       });
     }
 
+    if (error instanceof WebsiteConflictError) {
+      return fail(error.message);
+    }
+
+    if (error instanceof WebsiteOwnershipError) {
+      return fail("This website is no longer available to your account.");
+    }
+
     if (conflict === "website") {
-      return errorState(values, "Your website changed while saving. Refresh and try again.");
+      return fail("Your website changed while saving. Refresh and try again.");
     }
 
     throw error;
@@ -224,5 +294,32 @@ export async function saveWebsiteAction(
     fieldErrors: {},
     message: intent === "publish" ? "Website published." : "Draft saved.",
     publishedAt: saved.publishedAt?.toISOString(),
+    updatedAt: saved.updatedAt.toISOString(),
   };
+}
+
+export async function saveWebsiteAction(
+  previousState: WebsiteFormState,
+  formData: FormData,
+): Promise<WebsiteFormState> {
+  try {
+    return await saveWebsiteActionInternal(previousState, formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error;
+    }
+
+    console.error("Website management action failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
+
+    return {
+      status: "error",
+      values: readValues(formData),
+      fieldErrors: {},
+      message: "We couldn't update your website. Check your connection and try again.",
+      updatedAt: previousState.updatedAt,
+      publishedAt: previousState.publishedAt,
+    };
+  }
 }

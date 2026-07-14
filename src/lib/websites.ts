@@ -117,10 +117,32 @@ type WebsiteFormStateBase = {
   fieldErrors: Partial<Record<WebsiteField, string[]>>;
   message: string;
   publishedAt?: string;
+  updatedAt?: string;
 };
 
 export type WebsiteFormState =
   | (WebsiteFormStateBase & { status: "idle" })
   | (WebsiteFormStateBase & { status: "error" })
   | (WebsiteFormStateBase & { status: "saved" })
-  | (WebsiteFormStateBase & { status: "published" });
+  | (WebsiteFormStateBase & { status: "published" })
+  | (WebsiteFormStateBase & { status: "unpublished" });
+
+export type WebsiteNextAction = "choose-plan" | "finish-setup" | "publish" | "manage";
+
+export function getWebsiteNextAction(input: {
+  hasSubscription: boolean;
+  accessAllowed: boolean;
+  hasShop: boolean;
+  isPublishable: boolean;
+  isPublished: boolean;
+}): WebsiteNextAction {
+  if (!input.hasSubscription || !input.accessAllowed) {
+    return "choose-plan";
+  }
+
+  if (!input.hasShop || !input.isPublishable) {
+    return "finish-setup";
+  }
+
+  return input.isPublished ? "manage" : "publish";
+}

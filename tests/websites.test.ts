@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   emptyWebsiteFormValues,
+  getWebsiteNextAction,
   websiteDraftContentSchema,
   websitePublishedContentSchema,
   websiteValuesToContent,
@@ -11,6 +12,38 @@ const completeContent = {
   businessName: "North Star Studio",
   description: "Independent ceramics made in Bangkok.",
 };
+
+describe("website management next action", () => {
+  it("asks a seller without access to choose or restore the plan", () => {
+    expect(
+      getWebsiteNextAction({
+        hasSubscription: false,
+        accessAllowed: false,
+        hasShop: false,
+        isPublishable: false,
+        isPublished: false,
+      }),
+    ).toBe("choose-plan");
+  });
+
+  it("moves an active seller through setup, publish, and management", () => {
+    const active = {
+      hasSubscription: true,
+      accessAllowed: true,
+      hasShop: true,
+    } as const;
+
+    expect(getWebsiteNextAction({ ...active, isPublishable: false, isPublished: false })).toBe(
+      "finish-setup",
+    );
+    expect(getWebsiteNextAction({ ...active, isPublishable: true, isPublished: false })).toBe(
+      "publish",
+    );
+    expect(getWebsiteNextAction({ ...active, isPublishable: true, isPublished: true })).toBe(
+      "manage",
+    );
+  });
+});
 
 describe("website content validation", () => {
   it("allows incomplete drafts but requires publishable identity", () => {

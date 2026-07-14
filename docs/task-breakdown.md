@@ -263,7 +263,7 @@ Every task must meet these rules:
 
 ## Task 8: Protected website management
 
-**Status:** Not started.
+**Status:** Implemented; end-to-end two-seller verification pending.
 
 **Description:** Provide the seller workspace that connects plan status, onboarding, editing, preview, publication, and sign-out into one maintainable flow. Reuse the existing protected procedure and ownership patterns instead of adding client-side authorization checks.
 
@@ -273,19 +273,20 @@ Every task must meet these rules:
 
 **Acceptance criteria:**
 
-- [ ] The protected entry route shows the seller's plan state and the correct next action: choose plan, finish setup, publish, or manage.
-- [ ] A seller can edit approved fields, preview the draft, publish, unpublish, and return to the public website without losing changes.
-- [ ] All reads and mutations use the authenticated session user ID; no request accepts a client-supplied owner as authority.
-- [ ] Inactive subscriptions cannot edit or publish, and the UI explains how to restore access.
-- [ ] Success, validation, conflict, network, and stale-data states are recoverable and accessible.
-- [ ] Sign-out works from the workspace and returns to the platform landing page.
-- [ ] The implementation does not add buyer accounts, multiple sites, templates, team access, or a platform-owner UI.
+- [x] The protected entry route shows the seller's plan state and the correct next action: choose plan, finish setup, publish, or manage.
+- [x] A seller can edit approved fields, preview the draft, publish, unpublish, and return to the public website without losing changes.
+- [x] All reads and mutations use the authenticated session user ID; no request accepts a client-supplied owner as authority.
+- [x] Inactive subscriptions cannot edit or publish, and the UI explains how to restore access.
+- [x] Success, validation, conflict, network, and stale-data states are recoverable and accessible.
+- [x] Sign-out works from the workspace and returns to the platform landing page.
+- [x] The implementation does not add buyer accounts, multiple sites, templates, team access, or a platform-owner UI.
 
 **Verification:**
 
 - [ ] Run an end-to-end manual flow with two seller accounts: Seller A can manage only A, and Seller B can manage only B.
 - [ ] Confirm a publish change is visible on the correct public host and absent from every other host.
-- [ ] Test direct requests to each protected procedure with no session, the wrong seller ID, an inactive subscription, and valid active ownership.
+- [x] Test direct requests to protected procedures with no session and reject client-supplied ownership fields before database access.
+- [ ] Test inactive subscriptions and valid active ownership against a configured database.
 
 **Estimated scope:** Large; deliver as vertical increments for read, edit, publish, and subscription-state UX.
 
