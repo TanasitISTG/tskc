@@ -11,7 +11,9 @@ function originFromUrl(url: string | undefined): string | null {
 
 function buildCsp(nonce: string): string {
   const r2Origin = originFromUrl(process.env.R2_PUBLIC_BASE_URL);
-  const sentryOrigin = originFromUrl(process.env.SENTRY_DSN);
+  const sentryOrigin = originFromUrl(
+    process.env.NEXT_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN,
+  );
 
   const imgSources = ["'self'", r2Origin].filter(Boolean).join(" ");
   const connectSources = ["'self'", sentryOrigin].filter(Boolean).join(" ");
