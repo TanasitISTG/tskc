@@ -1,9 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+
+import * as Sentry from "@sentry/nextjs";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-export default function BillingError({ reset }: { error: Error; reset: () => void }) {
+export default function BillingError({ error, reset }: { error: Error; reset: () => void }) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <main id="main-content" className="grid min-h-screen place-items-center px-5 py-12">
       <Alert variant="destructive" className="max-w-lg">

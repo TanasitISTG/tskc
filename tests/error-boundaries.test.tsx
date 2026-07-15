@@ -1,6 +1,18 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+vi.mock("react", async () => {
+  const actual = await vi.importActual<typeof import("react")>("react");
+  return {
+    ...actual,
+    useEffect: (effect: () => void) => effect(),
+  };
+});
 
 vi.mock("next/link", () => ({
   default: (props: Record<string, unknown>) => createElement("a", props),
@@ -9,9 +21,15 @@ vi.mock("next/link", () => ({
 import GlobalError from "@/app/global-error";
 import NotFound from "@/app/not-found";
 import RootError from "@/app/error";
+import BillingError from "@/app/billing/error";
+import * as Sentry from "@sentry/nextjs";
 
 const fakeError = Object.assign(new Error("test"), { digest: "test-digest" });
 const fakeReset = () => {};
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("NotFound", () => {
   it("renders an accessible 404 with a return link", () => {
@@ -34,6 +52,17 @@ describe("RootError", () => {
     expect(markup).toContain("Try again");
     expect(markup).toContain("Back to TSKC");
     expect(markup).toContain("h-11");
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(fakeError);
+  });
+});
+
+describe("BillingError", () => {
+  it("reports the billing error before rendering recovery actions", () => {
+    const markup = renderToStaticMarkup(
+      createElement(BillingError, { error: fakeError, reset: fakeReset }),
+    );
+    expect(markup).toContain("Billing status could not be loaded");
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(fakeError);
   });
 });
 
@@ -49,5 +78,6 @@ describe("GlobalError", () => {
     expect(markup).toContain("Try again");
     expect(markup).toContain("Back to TSKC");
     expect(markup).toContain("h-11");
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(fakeError);
   });
 });
