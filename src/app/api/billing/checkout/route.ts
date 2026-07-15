@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { billingCheckoutInputSchema } from "@/lib/billing";
 import { createAuthContext } from "@/server/auth-context";
 import { BillingServiceError, startSellerCheckout } from "@/server/billing-service";
+import { checkCheckoutRateLimit } from "@/server/checkout-rate-limit";
+import { logEvent } from "@/server/observability";
 
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== new URL(request.url).origin) {
@@ -12,6 +14,10 @@ export async function POST(request: Request) {
   const identity = (await createAuthContext(request.headers)).identity;
   if (identity === null) {
     return NextResponse.redirect(new URL("/auth?next=/billing", request.url), 303);
+  }
+
+  if (!(await checkCheckoutRateLimit(identity.userId))) {
+    return NextResponse.redirect(new URL("/billing?error=rate_limited", request.url), 303);
   }
 
   const formData = await request.formData();
@@ -26,6 +32,9 @@ export async function POST(request: Request) {
   } catch (error) {
     const code =
       error instanceof BillingServiceError ? error.code.toLowerCase() : "checkout_failed";
+    if (!(error instanceof BillingServiceError)) {
+      logEvent("error", "billing.checkout.failed", { code, sellerId: identity.userId, error });
+    }
     return NextResponse.redirect(new URL(`/billing?error=${code}`, request.url), 303);
   }
 }

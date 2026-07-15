@@ -10,6 +10,7 @@ import { RESERVED_SUBDOMAINS, normalizeSubdomain } from "@/lib/tenancy";
 import { websiteDraftContentSchema } from "@/lib/websites";
 import type { AuthContext } from "@/server/auth-context";
 import { getSellerBillingStatus, requireSellerSubscriptionAccess } from "@/server/billing-service";
+import { logEvent } from "@/server/observability";
 import { findSellerShop } from "@/server/shops";
 import { deleteWebsiteAssets, unreferencedWebsiteAssetKeys } from "@/server/r2";
 import {
@@ -59,6 +60,9 @@ export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   try {
     return await next({ ctx: { identity: requireSession(ctx.identity) } });
   } catch (error) {
+    if (error instanceof AuthError) {
+      logEvent("warn", "auth.failure", { code: error.code });
+    }
     return toTrpcError(error);
   }
 });
@@ -147,7 +151,7 @@ const websiteRouter = router({
     try {
       await deleteWebsiteAssets(replacedKeys);
     } catch {
-      console.error("Failed to remove unpublished website assets after a successful update");
+      logEvent("error", "website.asset.cleanup.failed", { phase: "unpublish" });
     }
 
     return { shop: unpublished };

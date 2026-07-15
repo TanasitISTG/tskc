@@ -28,6 +28,8 @@ const rawEnvSchema = z
     STRIPE_SECRET_KEY: nonEmptyString.optional(),
     STRIPE_WEBHOOK_SECRET: nonEmptyString.optional(),
     STRIPE_PRICE_ID: nonEmptyString.optional(),
+    KV_REST_API_URL: nonEmptyString.optional(),
+    KV_REST_API_TOKEN: nonEmptyString.optional(),
   })
   .passthrough();
 
@@ -84,6 +86,10 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
     STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET,
     STRIPE_PRICE_ID: env.STRIPE_PRICE_ID,
   });
+  const kv = allOrNone("KV", {
+    KV_REST_API_URL: env.KV_REST_API_URL,
+    KV_REST_API_TOKEN: env.KV_REST_API_TOKEN,
+  });
   if (env.NODE_ENV === "production") {
     if (env.DATABASE_URL === undefined) {
       throw new Error("DATABASE_URL is required in production");
@@ -104,6 +110,10 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
 
     if (r2 === undefined) {
       throw new Error("R2 configuration is required in production");
+    }
+
+    if (kv === undefined) {
+      throw new Error("KV configuration is required in production");
     }
 
     const publicR2Hostname = new URL(r2.R2_PUBLIC_BASE_URL).hostname;
@@ -142,6 +152,10 @@ export function parseServerEnv(input: Record<string, string | undefined>) {
       secretKey: stripe.STRIPE_SECRET_KEY,
       webhookSecret: stripe.STRIPE_WEBHOOK_SECRET,
       priceId: stripe.STRIPE_PRICE_ID,
+    },
+    kv: kv && {
+      restApiUrl: kv.KV_REST_API_URL,
+      restApiToken: kv.KV_REST_API_TOKEN,
     },
   };
 }

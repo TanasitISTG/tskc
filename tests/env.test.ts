@@ -91,6 +91,8 @@ describe("parseServerEnv", () => {
         STRIPE_SECRET_KEY: "stripe_test_key",
         STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
         STRIPE_PRICE_ID: "price_test",
+        KV_REST_API_URL: "https://kv.example.com",
+        KV_REST_API_TOKEN: "kv_token",
         ...r2,
       }),
     ).toThrow("R2_PUBLIC_BASE_URL must use a custom domain in production");
@@ -112,6 +114,41 @@ describe("parseServerEnv", () => {
         STRIPE_PRICE_ID: "price_test",
       }),
     ).toThrow("Stripe configuration must set all or none of its variables");
+  });
+
+  it("rejects partial KV credentials", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "test",
+        KV_REST_API_URL: "https://kv.example.com",
+      }),
+    ).toThrow("KV configuration must set all or none of its variables");
+  });
+
+  it("requires KV infrastructure in production", () => {
+    expect(() =>
+      parseServerEnv({
+        NODE_ENV: "production",
+        PLATFORM_DOMAIN: "tskc.example",
+        DATABASE_URL: "postgres://user:password@localhost:5432/tskc",
+        BETTER_AUTH_SECRET: "a-secret-with-at-least-thirty-two-characters",
+        BETTER_AUTH_URL: "https://tskc.example",
+        GOOGLE_CLIENT_ID: "google-client-id",
+        GOOGLE_CLIENT_SECRET: "google-client-secret",
+        DISCORD_CLIENT_ID: "discord-client-id",
+        DISCORD_CLIENT_SECRET: "discord-client-secret",
+        RESEND_API_KEY: "re_test",
+        RESEND_FROM: "TSKC <noreply@tskc.example>",
+        STRIPE_SECRET_KEY: "stripe_test_key",
+        STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
+        STRIPE_PRICE_ID: "price_test",
+        R2_ENDPOINT: "https://account.r2.cloudflarestorage.com",
+        R2_BUCKET: "tskc-files",
+        R2_ACCESS_KEY_ID: "access-key",
+        R2_SECRET_ACCESS_KEY: "secret-key",
+        R2_PUBLIC_BASE_URL: "https://assets.tskc.example",
+      }),
+    ).toThrow("KV configuration is required in production");
   });
 
   it("requires Stripe infrastructure in production", () => {
@@ -164,6 +201,8 @@ describe("parseServerEnv", () => {
         STRIPE_SECRET_KEY: "stripe_test_key",
         STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
         STRIPE_PRICE_ID: "price_test",
+        KV_REST_API_URL: "https://kv.example.com",
+        KV_REST_API_TOKEN: "kv_token",
       }),
     ).toMatchObject({
       platformDomain: "tskc.example",
@@ -188,6 +227,10 @@ describe("parseServerEnv", () => {
         secretKey: "stripe_test_key",
         webhookSecret: "whsec_test_secret",
         priceId: "price_test",
+      },
+      kv: {
+        restApiUrl: "https://kv.example.com",
+        restApiToken: "kv_token",
       },
     });
   });

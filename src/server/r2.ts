@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 import { parseServerEnv } from "@/lib/env";
+import { logEvent } from "@/server/observability";
 import type { WebsiteAssetRef, WebsiteDraftContent, WebsitePublishedContent } from "@/lib/websites";
 
 export type WebsiteAssetKind = "logo" | "hero";
@@ -173,7 +174,7 @@ export async function uploadWebsiteAssets(
     try {
       await remove(Object.values(assets).map((asset) => asset.key));
     } catch {
-      console.error("Failed to remove partially uploaded website assets");
+      logEvent("error", "website.asset.cleanup.failed", { phase: "upload_compensation" });
     }
 
     throw error;

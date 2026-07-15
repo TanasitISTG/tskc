@@ -21,6 +21,7 @@ import {
 } from "@/lib/websites";
 import { createAuthContext } from "@/server/auth-context";
 import { requireSellerSubscriptionAccess } from "@/server/billing-service";
+import { logEvent } from "@/server/observability";
 import {
   WebsiteStorageError,
   deleteWebsiteAssets,
@@ -83,7 +84,7 @@ async function compensate(keys: string[]) {
   try {
     await deleteWebsiteAssets(keys);
   } catch {
-    console.error("Failed to remove newly uploaded website assets after a database error");
+    logEvent("error", "website.asset.cleanup.failed", { phase: "database_error" });
   }
 }
 
@@ -147,7 +148,7 @@ async function saveWebsiteActionInternal(
       try {
         await deleteWebsiteAssets(replacedKeys);
       } catch {
-        console.error("Failed to remove unpublished website assets after a successful update");
+        logEvent("error", "website.asset.cleanup.failed", { phase: "unpublish" });
       }
 
       revalidatePath("/setup/website");
@@ -283,7 +284,7 @@ async function saveWebsiteActionInternal(
   try {
     await deleteWebsiteAssets(replacedKeys);
   } catch {
-    console.error("Failed to remove replaced website assets after a successful save");
+    logEvent("error", "website.asset.cleanup.failed", { phase: "replace" });
   }
 
   revalidatePath("/setup/website");
@@ -309,8 +310,9 @@ export async function saveWebsiteAction(
       throw error;
     }
 
-    console.error("Website management action failed", {
+    logEvent("error", "website.management.failed", {
       errorName: error instanceof Error ? error.name : "UnknownError",
+      error,
     });
 
     return {
