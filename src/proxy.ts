@@ -15,10 +15,12 @@ function buildCsp(nonce: string): string {
 
   const imgSources = ["'self'", r2Origin].filter(Boolean).join(" ");
   const connectSources = ["'self'", sentryOrigin].filter(Boolean).join(" ");
+  const isDev = process.env.NODE_ENV !== "production";
+  const scriptSrc = `'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`;
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'`,
+    `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src ${imgSources}`,
     `connect-src ${connectSources}`,
