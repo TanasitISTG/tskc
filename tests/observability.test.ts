@@ -47,7 +47,10 @@ describe("logEvent", () => {
   it("captures warnings to Sentry", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     logEvent("warn", "test.warn", { key: "value" });
-    expect(vi.mocked(Sentry.captureMessage)).toHaveBeenCalledWith("test.warn", "warning");
+    expect(vi.mocked(Sentry.captureMessage)).toHaveBeenCalledWith("test.warn", {
+      level: "warning",
+      extra: { key: "value" },
+    });
   });
 
   it("does not capture info to Sentry", () => {

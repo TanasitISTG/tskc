@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@sentry/nextjs", () => ({
   captureRequestError: vi.fn(),
+  captureRouterTransitionStart: vi.fn(),
   init: vi.fn(),
 }));
 

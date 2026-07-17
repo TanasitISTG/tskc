@@ -18,6 +18,6 @@ export function logEvent(
       extra: fields,
     });
   } else if (level === "warn") {
-    Sentry.captureMessage(event, "warning");
+    Sentry.captureMessage(event, { level: "warning", extra: fields });
   }
 }
