@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@sentry/nextjs", () => ({
   captureRequestError: vi.fn(),
   captureRouterTransitionStart: vi.fn(),
+  consoleLoggingIntegration: vi.fn(),
   init: vi.fn(),
 }));
 
@@ -38,8 +39,10 @@ describe("client instrumentation", () => {
 
     expect(vi.mocked(Sentry.init)).toHaveBeenCalledWith({
       dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      tracesSampleRate: 0,
+      tracesSampleRate: 1.0,
       profilesSampleRate: 0,
+      enableLogs: true,
+      integrations: expect.any(Array),
     });
   });
 });
